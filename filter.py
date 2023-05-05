@@ -1,10 +1,12 @@
 #Filtrar y limpiar archivos residuales de un archivo csv
 #Guardar cambios en un nuevo archivo csv
 import pandas as pd
+import sys 
 
-file= "..\Final_EDA\dataset.csv"
-
-def clear_csv(file):
+file= sys.path[0] + "\dataset.csv"
+#Imprimir el directorio actual
+print(file)
+def clear_csv():
     df = pd.read_csv(file)
     #Imprimir los nombres de las columnas del dataset
     """
@@ -20,6 +22,6 @@ def clear_csv(file):
     df = df.drop(['type', 'id', 'uri', 'track_href', 'analysis_url', 'time_signature', 'Unnamed: 0'], axis=1)
     df = df.fillna("Undefined")
     #Se guarda el nuevo dataset en un archivo csv
-    df.to_csv('..\Final_EDA\cleaned.csv', index=False)
+    df.to_csv(sys.path[0] + '\cleaned.csv', index=False)
 
-clear_csv(file)
+clear_csv()
