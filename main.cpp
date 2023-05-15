@@ -1,16 +1,17 @@
 #include<iostream>
 #include<fstream>
-#include<string>
-#include<vector>
-#include<algorithm>
-#include "db.h"
-//danceability,energy,key,loudness,mode,speechiness,acousticness,instrumentalness,liveness,valence
+#include <iostream>
+#include "source/database.h"
+#include "source/eigen/Eigen/Dense"
+
 #define DIM 10
 
 using namespace std;
 
-
-int main(){
-    
-    return 0;
+int main()
+{
+  Eigen::MatrixXd m(2,2);
+  return 0;
 }
+
+
