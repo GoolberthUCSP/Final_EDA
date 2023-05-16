@@ -4,30 +4,33 @@
 #include<vector>
 #include<fstream>
 #include<sstream>
-#include "record.h"
+#include<cstring>
 
-template<class IS, class T, int ndim>
+template<class IS>
 class Database{
 private:
     vector<Record<T, ndim>> records;
     IS indexingStructure;
 public:
+    
+    static constexpr int ndim = IS::nd_;
+    typedef typename IS::T_ T;
+    typedef typename IS::Point_ Point;
+    typedef typename IS::Record_ Record;
+
     Database(){}
-    void load(string filename);
+    void load(std::string filename);
     void indexing();
-    bool insert(Record<T, ndim> &record);
-    bool remove(Record<T, ndim> &record);
-    bool update(Record<T, ndim> &record);
-    bool search(Record<T, ndim> &record);
-    bool rangeSearch(Point<T, ndim> &point, T radius);
-    bool searchKNN(Point<T, ndim> &point, int k);
-    bool searchByAttribute(string attribute);
+    bool insert(Record &record);
+    bool remove(Record &record);
+    bool update(Record &record);
+    bool search(Record &record);
+    bool rangeSearch(Point &point, T radius);
+    bool searchKNN(Point &point, int k);
 };
 
-template<class IS, class T, int ndim>
-void Database<IS,T,ndim>::load(string filename){
-    //danceability,energy,key,loudness,mode,speechiness,acousticness,instrumentalness,liveness,valence,tempo,duration_ms,genre,song_name,title
-    //Primeros 10 campos son flotantes para el punto, el resto=5 son strings
+template<class IS>
+void Database<IS>::load(std::string filename){
     ifstream file(filename);
     string line;
     while (getline(file, line)){
