@@ -9,11 +9,12 @@
 
 using namespace std;
 
-void run(Database<BallTree<float, DIM>> &db);
+void run(BallTree<float, DIM> &balltree){
+}
 
 int main()
 {
-  Database<BallTree<float, DIM>> db;
+  BallTree<float, DIM> balltree(100);
   db.load("dataset.csv");
   db.indexing();
   run(db);
