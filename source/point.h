@@ -2,39 +2,52 @@
 #define POINT_H
 
 #include<string>
+#include<cmath>
 
 using namespace std;
 
+template<class T>
+T minimmum(T a, T b){
+    return a < b ? a : b;
+}
+template<class T>
+T maximum(T a, T b){
+    return a > b ? a : b;
+}
 template<class T, int ndim>
 class Point {
 private:
     T coords[ndim]{0};
 public:
+    using Point_ = Point<T, ndim>;
+
     Point(){};
     Point(T coords[ndim]){
         for (int i = 0; i < ndim; i++){
             this->coords[i] = coords[i];
         }
     }
-    Point(const Point<T, ndim> &other){
+    Point(Point_ &other){
         this->coords = other.coords;
     }
     T& operator[](int index){
         return coords[index];
     }
-    Point<T, ndim> getCoords(Point<T, ndim> &other, T function(T, T)){
+    Point_ getCoords(Point_ &other, bool is_min){
+        T function(T a, T b)= is_min ? minimmum : maximum;
+        if (is_min)
         T tmp[ndim];
         for (int i = 0; i < ndim; i++){
             tmp[i] = function(this->coords[i], other[i]);
         }
-        return Point<T, ndim>(tmp);
+        return Point_(tmp);
     }
-    Point<T, ndim> operator+(Point<T, ndim> &other){
+    Point_ operator+(Point_ &other){
         T tmp[ndim];
         for (int i = 0; i < ndim; i++){
             tmp[i] = this->coords[i] + other[i];
         }
-        return Point<T, ndim>(tmp);
+        return Point_(tmp);
     }
     T norm(){
         T sum = 0;
@@ -43,14 +56,21 @@ public:
         }
         return sqrt(sum);
     }
-    T distance(Point<T, ndim> &other){
+    T distance(Point_ &other){
         T sum = 0;
         for (int i = 0; i < ndim; i++){
             sum += (coords[i] - other[i]) * (coords[i] - other[i]);
         }
         return sqrt(sum);
     }
-    friend ostream& operator<<(ostream &os, Point<T, ndim> &point){
+    T product(Point_ &other){
+        T sum = 0;
+        for (int i = 0; i < ndim; i++){
+            sum += coords[i] * other[i];
+        }
+        return sum;
+    }
+    friend ostream& operator<<(ostream &os, Point_ &point){
         os << "(";
         for (int i = 0; i < ndim; i++){
             os << point[i];

@@ -6,20 +6,21 @@
 #include<sstream>
 #include<cstring>
 #include "record.h"
+#include "alg.h"
 
 template<class T, int ndim>
-struct Circle{
+struct Sphere{
     Point<T, ndim> center;
     T radius;
-    Circle(Point<T, ndim> center, T radius);
-    Circle(Point<T, ndim> center, Point<T, ndim> point);
+    Sphere(Point<T, ndim> center, T radius);
+    Sphere(Point<T, ndim> center, Point<T, ndim> point);
 };
 
 template<class T, int ndim>
 class Node{
 public:
     using Point_ = Point<T, ndim>;
-    using Circle_ = Circle<T, ndim>;
+    using Sphere_ = Sphere<T, ndim>;
     using Node_ = Node<T, ndim>;
     using Record_ = Record<T, ndim>;
     using Vector_ = vector<Record_*>;
@@ -30,7 +31,7 @@ public:
     void build();
 
 private:
-    Circle_ circle;
+    Sphere_ Sphere;
     Node_ *left, *right;
     Vector_ records;
     bool isLeaf;
@@ -44,7 +45,7 @@ private:
 public:
     using Record_ = Record<T, ndim>;
     using Point_ = Point<T, ndim>;
-    using Circle_ = Circle<T, ndim>;
+    using Sphere_ = Sphere<T, ndim>;
     using Node_ = Node<T, ndim>;
     using Vector_ = vector<Record_*>;
     static constexpr int ndim_ = ndim;
@@ -62,14 +63,14 @@ private:
     Node_ *root;
     Vector_ records;
 };
-//CIRCLE METHODS
+//Sphere METHODS
 template<class T, int ndim>
-Circle<T,ndim>::Circle(Point<T, ndim> center, Point<T, ndim> point){
+Sphere<T,ndim>::Sphere(Point<T, ndim> center, Point<T, ndim> point){
     this->center = center;
     this->radius = center.distance(point);
 }
 template<class T, int ndim>
-Circle<T,ndim>::Circle(Point<T, ndim> center, T radius){
+Sphere<T,ndim>::Sphere(Point<T, ndim> center, T radius){
     this->center = center;
     this->radius = radius;
 }
