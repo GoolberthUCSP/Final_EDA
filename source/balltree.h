@@ -29,7 +29,10 @@ public:
     Node(int max_records, Point_ &center, Point_ &point);
     Node(int max_records, Vector_ &records);
     void build();
-
+    Record_ &search(Point_ &point);
+    bool insert(Record_ &record);
+    Vector_ range_query(Point_ &center, T radius);
+    Vector_ knn_query(Point_ &center, int k);
 private:
     Sphere_ Sphere;
     Node_ *left, *right;
@@ -51,19 +54,19 @@ public:
     static constexpr int ndim_ = ndim;
     using T_ = T;
 
-    BallTree(vector<Record<T, ndim>> &records);
-    void build();
+    BallTree(int max_records);
     void load(std::string filename);
+    void indexing(int max_records);
     bool insert(Record_ &record);
     Vector_ by_atribute(string atribute, string value);
     Vector_ range_query(Point_ &center, T radius);
     Vector_ knn_query(Point_ &center, int k);
-
 private:
     Node_ *root;
     Vector_ records;
 };
-//Sphere METHODS
+
+//SPHERE METHODS
 template<class T, int ndim>
 Sphere<T,ndim>::Sphere(Point<T, ndim> center, Point<T, ndim> point){
     this->center = center;
@@ -79,6 +82,12 @@ Sphere<T,ndim>::Sphere(Point<T, ndim> center, T radius){
 
 
 //BALLTREE METHODS
+template<class T, int ndim>
+BallTree<T,ndim>::BallTree(int max_records){
+    load("data.csv");
+    indexing(max_records, this->records);
+}
+
 template<class T, int ndim>
 void BallTree<T,ndim>::load(std::string filename){
     ifstream file(filename);
@@ -97,7 +106,7 @@ void BallTree<T,ndim>::load(std::string filename){
         getline(ss, genre, ',');
         getline(ss, song_name, ',');
         getline(ss, title, ',');
-        Record<T,ndim>* record = new Record<T,ndim>(Point<T,ndim>(coords), tempo, duration_ms, genre, song_name, title);
+        Record_* record = new Record_(Point_(coords), tempo, duration_ms, genre, song_name, title);
         records.push_back(*record);
     }
 }
