@@ -19,6 +19,7 @@ public:
     string getGenre(){ return genre; }
     string getSong_name(){ return song_name; }
     string getTitle(){ return title; }
+    int getDimension(){ return ndim; }
     T distance(Record_ &other){
         return point.distance(other.getPoint());
     }
