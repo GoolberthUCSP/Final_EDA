@@ -6,7 +6,7 @@
 #include<sstream>
 #include<cstring>
 #include "record.h"
-#include "alg.h"
+#include "eig_aux.h"
 
 template<class T, int ndim>
 struct Sphere{

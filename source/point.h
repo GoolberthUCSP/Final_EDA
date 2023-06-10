@@ -1,7 +1,6 @@
 #ifndef POINT_H
 #define POINT_H
 
-#include<string>
 #include<cmath>
 
 using namespace std;
@@ -46,7 +45,7 @@ public:
         }
         return sqrt(sum);
     }
-    T product(Point_ &other){
+    T dotProduct(Point_ &other){
         T sum = 0;
         for (int i = 0; i < ndim; i++){
             sum += coords[i] * other[i];
@@ -57,7 +56,7 @@ public:
         os << "(";
         for (int i = 0; i < ndim; i++){
             os << point[i];
-            if (i < ndim - 1) os << ", ";
+            if (i < ndim - 1) os << ",";
         }
         os << ")";
         return os;

@@ -9,32 +9,27 @@ public:
     using Point_ = Point<T, ndim>;
     using Record_ = Record<T, ndim>;
 
-    Record(Point_ &point, string tempo, string duration_ms, 
-            string genre, string song_name, string title) :    
-            point(point), tempo(tempo), duration_ms(duration_ms), 
-            genre(genre), song_name(song_name), title(title) {}
+    Record(Point_ &point, string song_name, string title) :    
+            point(point), song_name(song_name), title(title) {}
     Point_ &getPoint(){ return point; }
-    string getTempo(){ return tempo; }
-    string getDuration_ms(){ return duration_ms; }
-    string getGenre(){ return genre; }
     string getSong_name(){ return song_name; }
     string getTitle(){ return title; }
     int getDimension(){ return ndim; }
     T distance(Record_ &other){
         return point.distance(other.getPoint());
     }
-    T product(Record_ &other){
-        return point.product(other.getPoint());
+    T dotProduct(Record_ &other){
+        return point.dotProduct(other.getPoint());
     }
     friend ostream& operator<<(ostream &os, Record_ &record){
         //Print title\tgenre\tsong_name\tduration_ms\ttempo
-        os << record.title << "\t" << record.genre << "\t" << record.song_name 
-            << "\t" << record.duration_ms << "\t" << record.tempo;
+        if (record.title != "Null") os << record.title;
+        else os << record.song_name;
         return os;
     }
 private:
     Point_ point;
-    string tempo, duration_ms, genre, song_name, title;
+    string song_name, title;
 };
 
 #endif

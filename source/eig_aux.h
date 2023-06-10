@@ -1,9 +1,9 @@
-#include <Eigen/Dense>
+#include "eigen/Dense"
 #include <thread>
 #include <vector>
 #include "record.h"
 
-// Función para crear la matriz utilizando la paralelización
+// Función para crear la matriz desde un vector de punteros a Records utilizando la paralelización
 template<class T, int ndim>
 Eigen::MatrixXd createMatrix(const std::vector<Record<T,ndim>*>& records) {
     // Tamaño de la matriz
