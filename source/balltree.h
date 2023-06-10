@@ -23,17 +23,17 @@ public:
     using Sphere_ = Sphere<T, ndim>;
     using Node_ = Node<T, ndim>;
     using Record_ = Record<T, ndim>;
-    using Vector_ = vector<Record_*>;
+    using VecR_ = vector<Record_*>;
 
     Node(int max_records, Point_ &center, T radius);
     Node(int max_records, Point_ &center, Point_ &point);
-    Node(int max_records, Vector_ &records);
+    Node(int max_records, VecR_ &records);
     void build();
 
 private:
     Sphere_ Sphere;
     Node_ *left, *right;
-    Vector_ records;
+    VecR_ records;
     bool isLeaf;
     int max_records;
 };
@@ -47,21 +47,22 @@ public:
     using Point_ = Point<T, ndim>;
     using Sphere_ = Sphere<T, ndim>;
     using Node_ = Node<T, ndim>;
-    using Vector_ = vector<Record_*>;
+    using VecR_ = vector<Record_*>;
     static constexpr int ndim_ = ndim;
     using T_ = T;
 
-    BallTree(vector<Record<T, ndim>> &records);
-    void build();
+    BallTree(int max_records) : max_records(max_records) {}
     void load(std::string filename);
+    void build();
     bool insert(Record_ &record);
-    Vector_ by_atribute(string atribute, string value);
-    Vector_ range_query(Point_ &center, T radius);
-    Vector_ knn_query(Point_ &center, int k);
+    VecR_ by_atribute(string atribute, string value);
+    VecR_ range_query(Point_ &center, T radius);
+    VecR_ knn_query(Point_ &center, int k);
 
 private:
     Node_ *root;
-    Vector_ records;
+    VecR_ records;
+    int max_records;
 };
 //Sphere METHODS
 template<class T, int ndim>
@@ -80,7 +81,7 @@ Sphere<T,ndim>::Sphere(Point<T, ndim> center, T radius){
 
 //BALLTREE METHODS
 template<class T, int ndim>
-void BallTree<T,ndim>::load(std::string filename){
+void BallTree<T,ndim>::load(std::string filename="../dataset.csv"){
     ifstream file(filename);
     string line;
     while (getline(file, line)){
@@ -97,9 +98,16 @@ void BallTree<T,ndim>::load(std::string filename){
         getline(ss, genre, ',');
         getline(ss, song_name, ',');
         getline(ss, title, ',');
-        Record<T,ndim>* record = new Record<T,ndim>(Point<T,ndim>(coords), tempo, duration_ms, genre, song_name, title);
+        Record_* record = new Record_(Point_(coords), tempo, duration_ms, genre, song_name, title);
         records.push_back(*record);
     }
+}
+
+template<class T, int ndim>
+void BallTree<T,ndim>::build(){
+    load();
+    root = new Node_(max_records, records);
+    root->build();
 }
 
 
