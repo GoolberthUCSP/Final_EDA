@@ -3,6 +3,7 @@
 
 #include<cmath>
 #include<vector>
+#include<Eigen/Dense>
 #include "point.h"
 
 //Recibe un vector de puntos y devuelve el radio y el centroide

@@ -6,14 +6,6 @@
 
 using namespace std;
 
-template<class T>
-T minimmum(T a, T b){
-    return a < b ? a : b;
-}
-template<class T>
-T maximum(T a, T b){
-    return a > b ? a : b;
-}
 template<class T, int ndim>
 class Point {
 private:
@@ -32,15 +24,6 @@ public:
     }
     T& operator[](int index){
         return coords[index];
-    }
-    Point_ getCoords(Point_ &other, bool is_min){
-        T function(T a, T b)= is_min ? minimmum : maximum;
-        if (is_min)
-        T tmp[ndim];
-        for (int i = 0; i < ndim; i++){
-            tmp[i] = function(this->coords[i], other[i]);
-        }
-        return Point_(tmp);
     }
     Point_ operator+(Point_ &other){
         T tmp[ndim];

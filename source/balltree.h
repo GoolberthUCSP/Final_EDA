@@ -29,7 +29,10 @@ public:
     Node(int max_records, Point_ &center, Point_ &point);
     Node(int max_records, VecR_ &records);
     void build();
-
+    Record_ &search(Point_ &point);
+    bool insert(Record_ &record);
+    Vector_ range_query(Point_ &center, T radius);
+    Vector_ knn_query(Point_ &center, int k);
 private:
     Sphere_ Sphere;
     Node_ *left, *right;
@@ -53,18 +56,19 @@ public:
 
     BallTree(int max_records) : max_records(max_records) {}
     void load(std::string filename);
-    void build();
+    void indexing(int max_records);
     bool insert(Record_ &record);
-    VecR_ by_atribute(string atribute, string value);
-    VecR_ range_query(Point_ &center, T radius);
-    VecR_ knn_query(Point_ &center, int k);
+    Vector_ by_atribute(string atribute, string value);
+    Vector_ range_query(Point_ &center, T radius);
+    Vector_ knn_query(Point_ &center, int k);
 
 private:
     Node_ *root;
     VecR_ records;
     int max_records;
 };
-//Sphere METHODS
+
+//SPHERE METHODS
 template<class T, int ndim>
 Sphere<T,ndim>::Sphere(Point<T, ndim> center, Point<T, ndim> point){
     this->center = center;
@@ -80,6 +84,18 @@ Sphere<T,ndim>::Sphere(Point<T, ndim> center, T radius){
 
 
 //BALLTREE METHODS
+template<class T, int ndim>
+BallTree<T,ndim>::BallTree(int max_records){
+    load("data.csv");
+    indexing(max_records, this->records);
+}
+
+template<class T, int ndim>
+BallTree<T,ndim>::BallTree(int max_records){
+    load("data.csv");
+    indexing(max_records, this->records);
+}
+
 template<class T, int ndim>
 void BallTree<T,ndim>::load(std::string filename="../dataset.csv"){
     ifstream file(filename);
@@ -98,6 +114,7 @@ void BallTree<T,ndim>::load(std::string filename="../dataset.csv"){
         getline(ss, genre, ',');
         getline(ss, song_name, ',');
         getline(ss, title, ',');
+        Record_* record = new Record_(Point_(coords), tempo, duration_ms, genre, song_name, title);
         Record_* record = new Record_(Point_(coords), tempo, duration_ms, genre, song_name, title);
         records.push_back(*record);
     }
