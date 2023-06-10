@@ -1,16 +1,16 @@
-#include <Eigen/Dense>
+#include "eigen\Dense"
 #include <thread>
 #include <vector>
 #include "record.h"
 
 // Función para crear la matriz utilizando la paralelización
 template<class T, int ndim>
-Eigen::MatrixXd createMatrix(const std::vector<Record<T,ndim>*>& records) {
+Eigen::MatrixXf createMatrix(const std::vector<Record<T,ndim>*>& records) {
     // Tamaño de la matriz
     int numRecords = records.size();
     int numDimensions = records[0]->getDimension();
     // Crear la matriz y reservar espacio
-    Eigen::MatrixXd matrix;
+    Eigen::MatrixXf matrix;
     matrix.resize(numRecords, numDimensions);
 
     // Definir el número de hilos
@@ -27,21 +27,33 @@ Eigen::MatrixXd createMatrix(const std::vector<Record<T,ndim>*>& records) {
         const double* point = records[i]->get_point();
         for (int j = 0; j < numDimensions; j++) {
             matrix(i, j) = point[j];
-        }
+            }
         }
     };
 
     // Crear los hilos y asignar el trabajo
     std::vector<std::thread> threads;
-    for (int i = 0; i < numThreads; i++) {
+    for (int i = 0; i < numThreads-1; i++) {
         start = i * chunkSize;
         end = (i == numThreads - 1) ? numRecords : start + chunkSize;
         threads.emplace_back(assignPointsToMatrix, start, end);
     }
+    threads.emplace_back(assignPointsToMatrix, end, numRecords);
 
     // Esperar a que todos los hilos terminen
     for (auto& thread : threads) {
         thread.join();
     }
     return matrix;
+}
+
+template<class T, int ndim>
+Eigen::VectorXd get_max_eigen_value(const std::vector<Record<T,ndim>*>& records){
+    Eigen::MatrixXf matrix = createMatrix(records);
+    Eigen::MatrixXf cov = matrix.transpose() * matrix;
+    Eigen::EigenSolver<Eigen::MatrixXf> es(cov);
+    //Return the maximum eigenvalue in point class
+    Point<T,ndim> max_eigen_value;
+    max_eigen_value.set_point(es.eigenvalues().real().maxCoeff());
+    return max_eigen_value;
 }
