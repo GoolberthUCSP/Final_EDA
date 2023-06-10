@@ -8,24 +8,27 @@ using namespace std;
 template<class T, int ndim>
 class Point {
 private:
-    T coords[ndim]{0};
+    T *coords;
 public:
     using Point_ = Point<T, ndim>;
 
-    Point(){};
+    Point(){
+        coords= new T[ndim]{0};
+    }
     Point(T coords[ndim]){
-        for (int i = 0; i < ndim; i++){
-            this->coords[i] = coords[i];
-        }
+        this->coords = coords;
     }
     Point(Point_ &other){
-        this->coords = other.coords;
+        coords = new T[ndim];
+        for (int i = 0; i < ndim; i++){
+            coords[i] = other[i];
+        }
     }
     T& operator[](int index){
         return coords[index];
     }
     Point_ operator+(Point_ &other){
-        T tmp[ndim];
+        T *tmp = new T[ndim];
         for (int i = 0; i < ndim; i++){
             tmp[i] = this->coords[i] + other[i];
         }
@@ -52,6 +55,18 @@ public:
         }
         return sum;
     }
+    Point_ operator/(int scalar){
+        T *tmp = new T[ndim];
+        for (int i = 0; i < ndim; i++){
+            tmp[i] = coords[i] / scalar;
+        }
+        return Point_(tmp);
+    }
+    void operator=(Point_ other){
+        for (int i = 0; i < ndim; i++){
+            coords[i] = other[i];
+        }
+    }
     friend ostream& operator<<(ostream &os, Point_ &point){
         os << "(";
         for (int i = 0; i < ndim; i++){
@@ -61,7 +76,9 @@ public:
         os << ")";
         return os;
     }
-    void setP
+    void setCoords(T coords[ndim]){
+        this->coords = coords;
+    }
 };
 
 #endif

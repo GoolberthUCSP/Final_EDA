@@ -9,10 +9,12 @@ public:
     using Point_ = Point<T, ndim>;
     using Record_ = Record<T, ndim>;
 
-    Record(Point_ &point, string song_name, string title) :    
-            point(point), song_name(song_name), title(title) {}
+    Record(T coords[ndim], string songName, string title) : songName(songName), title(title) {
+        point.setCoords(coords);
+    }
+
     Point_ &getPoint(){ return point; }
-    string getSong_name(){ return song_name; }
+    string getSongName(){ return songName; }
     string getTitle(){ return title; }
     int getDimension(){ return ndim; }
     T distance(Record_ &other){
@@ -22,14 +24,14 @@ public:
         return point.dotProduct(other.getPoint());
     }
     friend ostream& operator<<(ostream &os, Record_ &record){
-        //Print title\tgenre\tsong_name\tduration_ms\ttempo
+        //Print title\tgenre\tsongName\tduration_ms\ttempo
         if (record.title != "Null") os << record.title;
-        else os << record.song_name;
+        else os << record.songName;
         return os;
     }
 private:
     Point_ point;
-    string song_name, title;
+    string songName, title;
 };
 
 #endif
