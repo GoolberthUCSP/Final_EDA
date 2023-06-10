@@ -31,8 +31,8 @@ public:
     void build();
     Record_ &search(Point_ &point);
     bool insert(Record_ &record);
-    Vector_ range_query(Point_ &center, T radius);
-    Vector_ knn_query(Point_ &center, int k);
+    VecR_ range_query(Point_ &center, T radius);
+    VecR_ knn_query(Point_ &center, int k);
 private:
     Sphere_ Sphere;
     Node_ *left, *right;
@@ -54,13 +54,13 @@ public:
     static constexpr int ndim_ = ndim;
     using T_ = T;
 
-    BallTree(int max_records) : max_records(max_records) {}
+    BallTree(int max_records);
     void load(std::string filename);
-    void indexing(int max_records);
+    void indexing();
     bool insert(Record_ &record);
-    Vector_ by_atribute(string atribute, string value);
-    Vector_ range_query(Point_ &center, T radius);
-    Vector_ knn_query(Point_ &center, int k);
+    VecR_ by_atribute(string atribute, string value);
+    VecR_ range_query(Point_ &center, T radius);
+    VecR_ knn_query(Point_ &center, int k);
 
 private:
     Node_ *root;
@@ -86,18 +86,15 @@ Sphere<T,ndim>::Sphere(Point<T, ndim> center, T radius){
 //BALLTREE METHODS
 template<class T, int ndim>
 BallTree<T,ndim>::BallTree(int max_records){
+    //Initialize BallTree with max_records
+    this->max_records = max_records;
     load("data.csv");
-    indexing(max_records, this->records);
-}
-
-template<class T, int ndim>
-BallTree<T,ndim>::BallTree(int max_records){
-    load("data.csv");
-    indexing(max_records, this->records);
+    indexing();
 }
 
 template<class T, int ndim>
 void BallTree<T,ndim>::load(std::string filename="../dataset.csv"){
+    //Load records from csv file
     ifstream file(filename);
     string line;
     while (getline(file, line)){
@@ -121,8 +118,7 @@ void BallTree<T,ndim>::load(std::string filename="../dataset.csv"){
 }
 
 template<class T, int ndim>
-void BallTree<T,ndim>::build(){
-    load();
+void BallTree<T,ndim>::indexing(){
     root = new Node_(max_records, records);
     root->build();
 }
