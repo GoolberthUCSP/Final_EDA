@@ -6,11 +6,11 @@
 using namespace std;
 
 void run(BallTree<float, DIM> &balltree){
-  cout << "BallTree created" << endl;
+  std::cout << "BallTree created" << endl;
 }
 
 int main()
 {
-  BallTree<float, DIM> balltree(500);
+  BallTree<float, DIM> balltree(10, "dtest.csv");
   run(balltree);
 }

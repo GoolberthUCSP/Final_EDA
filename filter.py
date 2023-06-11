@@ -51,5 +51,8 @@ def clear_csv():
     df = df.fillna("Null")
     #Se guarda el nuevo dataset en un archivo csv
     df.to_csv(sys.path[0] + "\cleaned.csv", index=False)
+    #Guardar otro archivo de prueba con 1000 filas, las filas se seleccionan aleatoriamente pero nunca se repiten
+    df = df.sample(n=1000)
+    df.to_csv(sys.path[0] + "\dtest.csv", index=False)
 
 clear_csv()

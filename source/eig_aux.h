@@ -35,7 +35,7 @@ Eigen::MatrixXf createMatrix(const std::vector<Record<T,ndim>*>& records) {
     std::vector<std::thread> threads;
     for (int i = 0; i < numThreads-1; i++) {
         start = i * chunkSize;
-        end = (i == numThreads - 1) ? numRecords : start + chunkSize;
+        end = start + chunkSize;
         threads.emplace_back(assignPointsToMatrix, start, end);
     }
     threads.emplace_back(assignPointsToMatrix, end, numRecords);
@@ -50,9 +50,11 @@ Eigen::MatrixXf createMatrix(const std::vector<Record<T,ndim>*>& records) {
 template<class T, int ndim>
 Point<T,ndim> getMaxEigenVector(const std::vector<Record<T,ndim>*>& records){
     Eigen::MatrixXf matrix = createMatrix(records);
+    //Calcular la matriz de covarianza
     Eigen::MatrixXf cov = matrix.transpose() * matrix;
+    //Calcular los eigenvectores y eigenvalores de la matriz de covarianza
     Eigen::EigenSolver<Eigen::MatrixXf> es(cov);
-    //Obtener el eigenvector más grande, no confundir con el eigenvalue más grande
+    //Obtener el eigenvector más representativo, el cual indica la dirección de máxima varianza
     Eigen::VectorXf maxEigenVector = es.eigenvectors().col(0).real();
     Point<T,ndim> eigenvector;
     for (int i = 0; i < ndim; i++){

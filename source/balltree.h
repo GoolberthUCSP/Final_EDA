@@ -6,10 +6,14 @@
 #include<sstream>
 #include<thread>
 #include<string>
+#include<mutex>
 #include "record.h"
 #include "eig_aux.h"
 #include "lib_aux.h"
 const string FILENAME = "cleaned.csv";
+//Constantes de normalización para dimensiones 9 y 10
+const float MAX_DURATION = 913052.0;
+const float MAX_TEMPO = 220.29;
 
 using namespace std;
 
@@ -27,7 +31,7 @@ struct Sphere{
         radius = other.radius;
     }
     friend ostream& operator<<(ostream &os, Sphere<T, ndim> &sphere){
-        os << "Center: " << sphere.center << "-Radius: " << sphere.radius << endl;
+        os << "Center: " << sphere.center << "\nRadius: " << sphere.radius << endl;
         return os;
     }
 };
@@ -69,13 +73,14 @@ public:
     static constexpr int ndim_ = ndim;
     using T_ = T;
 
-    BallTree(int maxRecords);
-    void load(string filename= FILENAME);
+    BallTree(int maxRecords, string filename= FILENAME);
+    void load(string filename);
     void indexing();
     bool insert(Record_ &record);
-    VecR_ by_atribute(string atribute, string value);
+    VecR_ by_atribute(string atribute, T value);
     VecR_ rangeQuery(Point_ &center, T radius);
     VecR_ knnQuery(Point_ &center, int k);
+    void normalize(Point_ &point);
 
 private:
     Node_ *root;
@@ -142,18 +147,69 @@ void Node<T,ndim>::build(){
     leftSphereThread.join();
     rightSphereThread.join();
     //Llamar recursivamente a build para cada nodo
-    left->build();
-    right->build();
+    cout << "Left: " << leftRecords.size() << " Right: " << rightRecords.size() << endl;
+    //Paralelizar la llamada a build para cada nodo
+    thread leftBuildThread(&Node_::build, left);
+    thread rightBuildThread(&Node_::build, right);
+    leftBuildThread.join();
+    rightBuildThread.join();
+}
+
+template<class T, int ndim>
+vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
+    //Realiza una búsqueda por rango en el nodo
+    //Si el nodo es una hoja, retorna los records que están dentro del rango
+    //Si el nodo no es una hoja, se debe verificar si la esfera del nodo intersecta
+    //con la esfera de búsqueda, si no intersecta, retornar un vector vacío
+    //Si intersecta, llamar recursivamente a rangeQuery para cada hijo
+    //y retornar la unión de los resultados
+    vector<Record<T,ndim>*> result;
+    if (isLeaf){
+        for (Record_ *record: records){
+            if (record->getPoint().distance(center_) <= radius_){
+                result.push_back(record);
+            }
+        }
+        return result;
+    }
+    if (sphere.center.distance(center_) > (radius_ + sphere.radius)) return result;
+    vector<Record<T,ndim>*> leftResult = left->rangeQuery(center, radius);
+    vector<Record<T,ndim>*> rightResult = right->rangeQuery(center, radius);
+    result.insert(result.end(), leftResult.begin(), leftResult.end());
+    result.insert(result.end(), rightResult.begin(), rightResult.end());
+    return result;
+}
+
+template<class T, int ndim>
+vector<Record<T,ndim>*> Node<T,ndim>::knnQuery(Point_ &center_, int k){
+    //Realiza una búsqueda por k-nn en el nodo
+    //Si el nodo es una hoja, retorna los k records más cercanos a center_
+    //Realiza una búsqueda k-nn restringida de acuerdo al siguiente artículo:
+    //Ball*-tree: Efficient spatial indexing for constrained nearest-neighbor search in metric spaces
+    //El criterio del artículo es que realiza la búsqueda k-nn usando búsqueda por rango
+    VecR_ result;
+    if (isLeaf){
+        
+        return result;
+    }
 }
 
 //BALLTREE METHODS
 template<class T, int ndim>
-BallTree<T,ndim>::BallTree(int maxRecords){
+BallTree<T,ndim>::BallTree(int maxRecords, string filename){
     //Initialize BallTree with maxRecords
     this->maxRecords = maxRecords;
-    load();
+    load(filename);
     cout << records.size() << " records loaded\n";
     indexing();
+}
+
+template<class T, int ndim>
+void BallTree<T,ndim>::normalize(Point_ &point){
+    //Normalizar el punto en sus coordenadas 9 y 10 con las constantes
+    // MAX_TEMPO y MAX_DURATION
+    point[8] = point[8]/MAX_TEMPO;
+    point[9] = point[9]/MAX_DURATION;
 }
 
 template<class T, int ndim>
@@ -196,6 +252,33 @@ void BallTree<T,ndim>::indexing(){
     root->build();
 }
 
+template<class T, int ndim>
+vector<Record<T,ndim>*> BallTree<T,ndim>::by_atribute(string atribute, T value){
+    //Retorna los records que tienen el valor value en el atributo atribute
+    vector<Record<T,ndim>*> result;
+    for (Record_ *record: records){
+        if (record->getAtribute(atribute) == value){
+            result.push_back(record);
+        }
+    }
+    return result;
+}
+
+template<class T, int ndim>
+vector<Record<T,ndim>*> BallTree<T,ndim>::rangeQuery(Point_ &center, T radius){
+    //Realiza una búsqueda por rango en el árbol
+    //Llama a rangeQuery del root
+    normalize(center);
+    return root->rangeQuery(center, radius);
+}
+
+template<class T, int ndim>
+vector<Record<T,ndim>*> BallTree<T,ndim>::knnQuery(Point_ &center, int k){
+    //Realiza una búsqueda por k-nn en el árbol
+    //Llama a knnQuery del root
+    normalize(center);
+    return root->knnQuery(center, k);
+}
 
 //Auxiliary functions
 
