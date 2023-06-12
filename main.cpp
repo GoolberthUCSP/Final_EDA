@@ -6,7 +6,10 @@
 using namespace std;
 
 void run(BallTree<float, DIM> &balltree){
-  std::cout << "BallTree created" << endl;
+  vector<string> songs= balltree.by_atribute("energy", 0.75);
+  for (auto song : songs){
+    cout << song << endl;
+  }
 }
 
 int main()

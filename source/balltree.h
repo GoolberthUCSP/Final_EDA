@@ -24,6 +24,7 @@ public:
     using Sphere_ = Sphere<T, ndim>;
     using Node_ = Node<T, ndim>;
     using VecR_ = vector<Record_*>;
+    using VecS_ = vector<string>;
     static constexpr int ndim_ = ndim;
     using T_ = T;
 
@@ -31,9 +32,9 @@ public:
     void load(string filename);
     void indexing();
     bool insert(Record_ &record);
-    VecR_ by_atribute(string atribute, T value);
-    VecR_ rangeQuery(Point_ &center, T radius);
-    VecR_ knnQuery(Point_ &center, int k);
+    VecS_ by_atribute(string atribute, T value);
+    VecS_ rangeQuery(Point_ &center, T radius);
+    VecS_ knnQuery(Point_ &center, int k);
     VecR_ knnConstrained(VecR_ finded, Node_ &actual_node, float range, Point_ &center, int k);
     void normalize(Point_ &point);
 
@@ -106,19 +107,28 @@ void BallTree<T,ndim>::indexing(){
 }
 
 template<class T, int ndim>
-vector<Record<T,ndim>*> BallTree<T,ndim>::by_atribute(string atribute, T value){
+vector<string> BallTree<T,ndim>::by_atribute(string atribute, T value){
     //Retorna los records que tienen el valor value en el atributo atribute
     vector<Record<T,ndim>*> result;
+    vector<string> songs;
     for (Record_ *record: records){
         if (record->getAtribute(atribute) == value){
             result.push_back(record);
         }
     }
-    return result;
+    //Retornar el nombre de la canción y el título de cada record usando getters
+    //Retornar un vector de strings con la salida ostream de cada record
+    stringstream ss;
+    for (Record_ *record: result){
+        ss << *record;
+        songs.push_back(ss.str());
+        ss.str("");
+    }
+    return songs;
 }
 
 template<class T, int ndim>
-vector<Record<T,ndim>*> BallTree<T,ndim>::rangeQuery(Point_ &center, T radius){
+vector<string> BallTree<T,ndim>::rangeQuery(Point_ &center, T radius){
     //Realiza una búsqueda por rango en el árbol
     //Llama a rangeQuery del root
     normalize(center);
@@ -177,7 +187,7 @@ def constrained_nn_search(Pin, node, r, K):
     return Pout
 */
 template<class T, int ndim>
-vector<Record<T,ndim>*> BallTree<T,ndim>::knnQuery(Point_ &center, int k){
+vector<string> BallTree<T,ndim>::knnQuery(Point_ &center, int k){
     //Realiza una búsqueda por k-nn en el árbol
     //Llama a knnQuery del root
     normalize(center);

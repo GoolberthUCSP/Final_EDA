@@ -95,7 +95,7 @@ void Node<T,ndim>::build(){
     leftSphereThread.join();
     rightSphereThread.join();
     //Llamar recursivamente a build para cada nodo
-    cout << "Left: " << leftRecords.size() << " Right: " << rightRecords.size() << endl;
+    //cout << "Left: " << leftRecords.size() << " Right: " << rightRecords.size() << endl; //DEBUGGING
     //Paralelizar la llamada a build para cada nodo
     thread leftBuildThread(&Node_::build, left);
     thread rightBuildThread(&Node_::build, right);
@@ -111,7 +111,7 @@ vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
     //con la esfera de búsqueda, si no intersecta, retornar un vector vacío
     //Si intersecta, llamar recursivamente a rangeQuery para cada hijo
     //y retornar la unión de los resultados
-    vector<Record<T,ndim>*> result;
+    VecR_ result;
     if (isLeaf){
         for (Record_ *record: records){
             if (record->getPoint().distance(center_) <= radius_){
@@ -120,9 +120,11 @@ vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
         }
         return result;
     }
-    if (sphere.center.distance(center_) > (radius_ + sphere.radius)) return result;
-    vector<Record<T,ndim>*> leftResult = left->rangeQuery(center, radius);
-    vector<Record<T,ndim>*> rightResult = right->rangeQuery(center, radius);
+    //Si la esfera del nodo no intersecta con la esfera de búsqueda, retornar un vector vacío
+    if (sphere.distance(center_) > (radius_ + sphere.radius))
+        return result;
+    VecR_ leftResult = left->rangeQuery(center_, radius_);
+    VecR_ rightResult = right->rangeQuery(center_, radius_);
     result.insert(result.end(), leftResult.begin(), leftResult.end());
     result.insert(result.end(), rightResult.begin(), rightResult.end());
     return result;

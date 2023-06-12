@@ -20,6 +20,9 @@ struct Sphere{
         os << "Center: " << sphere.center << "\nRadius: " << sphere.radius << endl;
         return os;
     }
+    T distance(Point<T, ndim> &point){
+        return center.distance(point);
+    }
 };
 
 #endif // SPHERE_H
