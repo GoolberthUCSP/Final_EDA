@@ -34,12 +34,12 @@ public:
         }
         return Point_(tmp);
     }
-    T norm(){
+    T norm2(){
         T sum = 0;
         for (int i = 0; i < ndim; i++){
             sum += coords[i] * coords[i];
         }
-        return sqrt(sum);
+        return sum;
     }
     T distance(Point_ &other){
         T sum = 0;
@@ -78,6 +78,29 @@ public:
     }
     void setCoords(T coords[ndim]){
         this->coords = coords;
+    }
+    void operator+=(Point_ &other){
+        for (int i = 0; i < ndim; i++){
+            coords[i] += other[i];
+        }
+    }
+    void operator-=(Point_ &other){
+        for (int i = 0; i < ndim; i++){
+            coords[i] -= other[i];
+        }
+    }
+    void operator*=(T scalar){
+        for (int i = 0; i < ndim; i++){
+            coords[i] *= scalar;
+        }
+    }
+    void operator/=(T scalar){
+        for (int i = 0; i < ndim; i++){
+            coords[i] /= scalar;
+        }
+    }
+    ~Point(){
+        delete[] coords;
     }
 };
 

@@ -23,6 +23,9 @@ struct Sphere{
     T distance(Point<T, ndim> &point){
         return center.distance(point);
     }
+    T distance(Sphere<T, ndim> &sphere){
+        return center.distance(sphere.center);
+    }
 };
 
 #endif // SPHERE_H

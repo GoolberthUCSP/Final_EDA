@@ -42,6 +42,12 @@ public:
     T getAtribute(string atribute){
         return point[num_atribs.at(atribute)];
     }
+    string getSongName(string atribute){
+        if (atribute == "songName" || atribute == "title")
+            //Return ostream loaded
+            return atribute == "songName" ? songName : title;
+        else return "Null";
+    }
     friend ostream& operator<<(ostream &os, Record_ &record){
         //Print title\tgenre\tsongName\tduration_ms\ttempo
         if (record.title != "Null") os << record.title;

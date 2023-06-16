@@ -14,6 +14,6 @@ void run(BallTree<float, DIM> &balltree){
 
 int main()
 {
-  BallTree<float, DIM> balltree(10, "dtest.csv");
+  BallTree<float, DIM> balltree(50, "dtest.csv");
   run(balltree);
 }

@@ -191,12 +191,13 @@ vector<string> BallTree<T,ndim>::knnQuery(Point_ &center, int k){
     //Realiza una búsqueda por k-nn en el árbol
     //Llama a knnQuery del root
     normalize(center);
-    return knnConstrained({}, root, 0, center, k);
+    return root->knnQuery(center, k);
 }
 
 template<class T, int ndim>
 vector<Record<T,ndim>*> BallTree<T,ndim>::knnConstrained(VecR_ finded, Node_ &actual_node, float range, Point_ &center, int k){
 
+    //return knnConstrained({}, root, 0, center, k);
 }
 
 #endif

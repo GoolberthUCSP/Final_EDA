@@ -94,6 +94,9 @@ void Node<T,ndim>::build(){
     thread rightSphereThread(&Node_::calcSphere, right);
     leftSphereThread.join();
     rightSphereThread.join();
+    //DEBUGGING: imprimir overlap= distancia entre esferas- suma de radios
+    //cout << "Overlap: " << left->sphere.distance(right->sphere) - left->sphere.radius - right->sphere.radius << endl;
+
     //Llamar recursivamente a build para cada nodo
     //cout << "Left: " << leftRecords.size() << " Right: " << rightRecords.size() << endl; //DEBUGGING
     //Paralelizar la llamada a build para cada nodo
@@ -150,7 +153,6 @@ template<class T, int ndim>
 Sphere<T,ndim> welzlAlgorithm(vector<Record<T,ndim>*> &records, vector<Record<T,ndim>*> boundary={}){
     //Algoritmo de Welzl para calcular la esfera mínima que contiene a todos los records
     //El algoritmo debe calcular la hipersfera mínima que contiene a todos los records en O(n)
-    //El algoritmo debe retornar la esfera mínima
     //El algoritmo debe ser recursivo
     //El algoritmo debe recibir como parámetros:
     //records: los records que deben estar dentro de la esfera
@@ -160,7 +162,21 @@ Sphere<T,ndim> welzlAlgorithm(vector<Record<T,ndim>*> &records, vector<Record<T,
     //y radio 0
     //Si n = 0 y boundary.size() = 2, retornar una esfera con centro en el punto medio entre los
     //dos records de boundary y radio la distancia entre los dos records de boundary dividido 2
-    
+    if (records.size() == 0 && boundary.size() == 1){
+        return Sphere_(boundary[0]->getPoint(), 0);
+    }
+    if (records.size() == 0 && boundary.size() == 2){
+        Point_ center = (boundary[0]->getPoint() + boundary[1]->getPoint())/2;
+        T radius = boundary[0]->getPoint().distance(boundary[1]->getPoint())/2;
+        return Sphere_(center, radius);
+    }
+    //Si n = 0 y boundary.size() = 3, retornar una esfera con centro en el punto medio entre los
+    //dos records de boundary y radio la distancia entre los dos records de boundary dividido 2
+    if (records.size() == 0 && boundary.size() == 3){
+        Point_ center = (boundary[0]->getPoint() + boundary[1]->getPoint() + boundary[2]->getPoint())/3;
+        T radius = boundary[0]->getPoint().distance(boundary[1]->getPoint())/3;
+        return Sphere_(center, radius);
+    }
 }
 
 #endif // NODE_H
