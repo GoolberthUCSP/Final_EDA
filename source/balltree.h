@@ -44,17 +44,12 @@ private:
     int maxRecords;
 };
 
-//SPHERE METHODS
-
-
-
 //BALLTREE METHODS
 template<class T, int ndim>
 BallTree<T,ndim>::BallTree(int maxRecords, string filename){
     //Initialize BallTree with maxRecords
     this->maxRecords = maxRecords;
     load(filename);
-    cout << records.size() << " records loaded\n";
     indexing();
 }
 
@@ -135,57 +130,6 @@ vector<string> BallTree<T,ndim>::rangeQuery(Point_ &center, T radius){
     return root->rangeQuery(center, radius);
 }
 
-
-/*Knn
-
-The K-NN (K-Nearest Neighbors) search always returns the K
- nearest neighbors to the target point. We will briefly 
- explain the K-NN search method in Ball-tree, as proposed by Liu et al [22].
-The algorithm considers a list of points P that contains the points found 
-so far as the nearest neighbors of the target point (t). Additionally, 
-let Ds be the minimum distance from the target point to the previously 
-discovered nodes, Ds = max x∈P in |x−t|, and DN be the distance between t and the current node.
-
-DN = max{DN.Parent, |t − center(N)| − radius(N)}
-
-In the K-NN search algorithm, a node is expanded if DN < Ds. If the current node is a leaf, 
-then every data point x in N that satisfies ||x − t|| < Ds is added to the results list. 
-When the size of the K-NN list exceeds the limit K, the farthest point is removed from the 
-list, and Ds is updated for further execution.
-
-Knn-constrained
-
-Constrained K-NN Search in Ball*-Tree
-Our key idea for implementing range-constrained K-NN search is to combine the K-NN and range 
-search algorithms in ball-tree and benefit from pruning in both. The range constraint limits 
-the number of candidate nodes, while K-NN pruning filters the search nodes based on the top K
-points found so far. In other words, whenever a node is either too far from the query (in terms 
-of range) or is not likely to be among the top K points found so far, it is skipped. Algorithm 2
-presents the constrained K-NN search algorithm for ball*-tree.
-
-def constrained_nn_search(Pin, node, r, K):
-    if DN >= Ds and DN > r:
-        return Pin  # No se cumple el criterio de rango, se devuelve la lista sin cambios
-    
-    if node es una hoja:
-        Pout = Pin
-        for x in points(node):
-            if |x - t| < Ds:
-                add x to Pout
-        if |Pout| == K + 1:
-            remove farthest neighbor from Pout
-            update Ds #Ds = distance from t to farthest neighbor in Pout
-    else:
-        dR = distance from center of childR(node)
-        dL = distance from center of childL(node)
-        Ptemp = Pin
-        if dR <= radius(childR(node)) + r:
-            Ptemp = constrained_nn_search(Ptemp, childR(node), r, K)
-        if dL <= radius(childL(node)) + r:
-            Pout = constrained_nn_search(Ptemp, childL(node), r, K)
-    
-    return Pout
-*/
 template<class T, int ndim>
 vector<string> BallTree<T,ndim>::knnQuery(Point_ &center, int k){
     //Realiza una búsqueda por k-nn en el árbol

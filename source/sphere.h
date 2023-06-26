@@ -21,10 +21,10 @@ struct Sphere{
         return os;
     }
     T distance(Point<T, ndim> &point){
-        return center.distance(point);
+        return center.distance(point)-radius;
     }
     T distance(Sphere<T, ndim> &sphere){
-        return center.distance(sphere.center);
+        return center.distance(sphere.center)-radius-sphere.radius;
     }
 };
 

@@ -75,20 +75,22 @@ void Node<T,ndim>::build(){
     int end = n;
     VecR_ leftRecords(records.begin()+begin, records.begin()+median);
     VecR_ rightRecords(records.begin()+median, records.begin()+end);
+
     //Realizar el calculo del eigenvector para cada nodo en paralelo
     Point_ eigLeft, eigRight;
     thread leftThread([&](){eigLeft = getMaxEigenVector(leftRecords);});
     thread rightThread([&](){eigRight = getMaxEigenVector(rightRecords);});
     leftThread.join();
     rightThread.join();
-    //Ordenar los records por el factor de proyección para cada nodo paralelamente
-    //Con la función sortByProyFactor
+
+    //Paralelizar el ordenamiento de los records respecto al factor de proyección
     thread leftSortThread(sortByProyFactor<T,ndim>, ref(leftRecords), ref(eigLeft));
     thread rightSortThread(sortByProyFactor<T,ndim>, ref(rightRecords), ref(eigRight));
     leftSortThread.join();
     rightSortThread.join();
     left = new Node_(maxRecords, leftRecords);
     right = new Node_(maxRecords, rightRecords);
+
     //Paralelizar el cálculo de la esfera para cada nodo
     thread leftSphereThread(&Node_::calcSphere, left);
     thread rightSphereThread(&Node_::calcSphere, right);
@@ -99,6 +101,7 @@ void Node<T,ndim>::build(){
 
     //Llamar recursivamente a build para cada nodo
     //cout << "Left: " << leftRecords.size() << " Right: " << rightRecords.size() << endl; //DEBUGGING
+    
     //Paralelizar la llamada a build para cada nodo
     thread leftBuildThread(&Node_::build, left);
     thread rightBuildThread(&Node_::build, right);
@@ -124,7 +127,7 @@ vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
         return result;
     }
     //Si la esfera del nodo no intersecta con la esfera de búsqueda, retornar un vector vacío
-    if (sphere.distance(center_) > (radius_ + sphere.radius))
+    if (sphere.distance(center_) > radius_)
         return result;
     VecR_ leftResult = left->rangeQuery(center_, radius_);
     VecR_ rightResult = right->rangeQuery(center_, radius_);
@@ -132,7 +135,56 @@ vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
     result.insert(result.end(), rightResult.begin(), rightResult.end());
     return result;
 }
+/*Knn
 
+The K-NN (K-Nearest Neighbors) search always returns the K
+ nearest neighbors to the target point. We will briefly 
+ explain the K-NN search method in Ball-tree, as proposed by Liu et al [22].
+The algorithm considers a list of points P that contains the points found 
+so far as the nearest neighbors of the target point (t). Additionally, 
+let Ds be the minimum distance from the target point to the previously 
+discovered nodes, Ds = max x∈P in |x−t|, and DN be the distance between t and the current node.
+
+DN = max{DN.Parent, |t − center(N)| − radius(N)}
+
+In the K-NN search algorithm, a node is expanded if DN < Ds. If the current node is a leaf, 
+then every data point x in N that satisfies ||x − t|| < Ds is added to the results list. 
+When the size of the K-NN list exceeds the limit K, the farthest point is removed from the 
+list, and Ds is updated for further execution.
+
+Knn-constrained
+
+Constrained K-NN Search in Ball*-Tree
+Our key idea for implementing range-constrained K-NN search is to combine the K-NN and range 
+search algorithms in ball-tree and benefit from pruning in both. The range constraint limits 
+the number of candidate nodes, while K-NN pruning filters the search nodes based on the top K
+points found so far. In other words, whenever a node is either too far from the query (in terms 
+of range) or is not likely to be among the top K points found so far, it is skipped. Algorithm 2
+presents the constrained K-NN search algorithm for ball*-tree.
+
+def constrained_nn_search(Pin, node, r, K):
+    if DN >= Ds and DN > r:
+        return Pin  # No se cumple el criterio de rango, se devuelve la lista sin cambios
+    
+    if node es una hoja:
+        Pout = Pin
+        for x in points(node):
+            if |x - t| < Ds:
+                add x to Pout
+        if |Pout| == K + 1:
+            remove farthest neighbor from Pout
+            update Ds #Ds = distance from t to farthest neighbor in Pout
+    else:
+        dR = distance from center of childR(node)
+        dL = distance from center of childL(node)
+        Ptemp = Pin
+        if dR <= radius(childR(node)) + r:
+            Ptemp = constrained_nn_search(Ptemp, childR(node), r, K)
+        if dL <= radius(childL(node)) + r:
+            Pout = constrained_nn_search(Ptemp, childL(node), r, K)
+    
+    return Pout
+*/
 template<class T, int ndim>
 vector<Record<T,ndim>*> Node<T,ndim>::knnQuery(Point_ &center_, int k){
     //Realiza una búsqueda por k-nn en el nodo
@@ -142,41 +194,11 @@ vector<Record<T,ndim>*> Node<T,ndim>::knnQuery(Point_ &center_, int k){
     //El criterio del artículo es que realiza la búsqueda k-nn usando búsqueda por rango
     VecR_ result;
     if (isLeaf){
-        
         return result;
     }
 }
 
 //Auxiliary functions
 
-template<class T, int ndim>
-Sphere<T,ndim> welzlAlgorithm(vector<Record<T,ndim>*> &records, vector<Record<T,ndim>*> boundary={}){
-    //Algoritmo de Welzl para calcular la esfera mínima que contiene a todos los records
-    //El algoritmo debe calcular la hipersfera mínima que contiene a todos los records en O(n)
-    //El algoritmo debe ser recursivo
-    //El algoritmo debe recibir como parámetros:
-    //records: los records que deben estar dentro de la esfera
-    //boundary: los records que están en el borde de la esfera
-    //n: cantidad de records
-    //Si n = 0 y boundary.size() = 1, retornar una esfera con centro en el único record de boundary
-    //y radio 0
-    //Si n = 0 y boundary.size() = 2, retornar una esfera con centro en el punto medio entre los
-    //dos records de boundary y radio la distancia entre los dos records de boundary dividido 2
-    if (records.size() == 0 && boundary.size() == 1){
-        return Sphere_(boundary[0]->getPoint(), 0);
-    }
-    if (records.size() == 0 && boundary.size() == 2){
-        Point_ center = (boundary[0]->getPoint() + boundary[1]->getPoint())/2;
-        T radius = boundary[0]->getPoint().distance(boundary[1]->getPoint())/2;
-        return Sphere_(center, radius);
-    }
-    //Si n = 0 y boundary.size() = 3, retornar una esfera con centro en el punto medio entre los
-    //dos records de boundary y radio la distancia entre los dos records de boundary dividido 2
-    if (records.size() == 0 && boundary.size() == 3){
-        Point_ center = (boundary[0]->getPoint() + boundary[1]->getPoint() + boundary[2]->getPoint())/3;
-        T radius = boundary[0]->getPoint().distance(boundary[1]->getPoint())/3;
-        return Sphere_(center, radius);
-    }
-}
 
 #endif // NODE_H

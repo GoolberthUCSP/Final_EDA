@@ -1,4 +1,5 @@
 #include<iostream>
+#include<chrono>
 #include "source/balltree.h"
 
 #define DIM 11
@@ -14,6 +15,9 @@ void run(BallTree<float, DIM> &balltree){
 
 int main()
 {
-  BallTree<float, DIM> balltree(50, "dtest.csv");
-  run(balltree);
+  auto start = std::chrono::high_resolution_clock::now();
+  BallTree<float, DIM> balltree(50, "cleaned.csv");
+  //run(balltree);
+  auto end = std::chrono::high_resolution_clock::now();
+  cout << "Tiempo de ejecución: " << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << " ms" << endl;
 }
