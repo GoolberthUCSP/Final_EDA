@@ -78,8 +78,8 @@ void Node<T,ndim>::build(){
 
     //Realizar el calculo del eigenvector para cada nodo en paralelo
     Point_ eigLeft, eigRight;
-    thread leftThread([&](){eigLeft = getMaxEigenVector(leftRecords);});
-    thread rightThread([&](){eigRight = getMaxEigenVector(rightRecords);});
+    thread leftThread([&](){eigLeft = getMaxEigenvectSVD(leftRecords);});
+    thread rightThread([&](){eigRight = getMaxEigenvectSVD(rightRecords);});
     leftThread.join();
     rightThread.join();
 

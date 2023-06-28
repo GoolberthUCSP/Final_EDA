@@ -1,3 +1,4 @@
+#define EIGEN_USE_THREADS
 #include "eigen/Dense"
 #include <thread>
 #include <vector>
@@ -63,6 +64,29 @@ Point<T,ndim> getMaxEigenVector(const std::vector<Record<T,ndim>*>& records){
     Eigen::MatrixXf cov = (matrix.transpose() * matrix)/(matrix.rows()-1);
     Eigen::EigenSolver<Eigen::MatrixXf> solver(cov);
     Eigen::MatrixXf eigenvectors = solver.eigenvectors().real();
+    Eigen::VectorXf maxEigenVector= eigenvectors.col(0);
+    Point<T,ndim> eigenvector;
+    for (int i = 0; i < ndim; i++) {
+        eigenvector[i] = maxEigenVector(i);
+    }
+    return eigenvector;
+}
+
+template<class T, int ndim>
+Point<T,ndim> getMaxEigenvectSVD(const std::vector<Record<T,ndim>*>& records){
+    /*
+    Crear la matriz de puntos
+    Calcular la matriz de covarianza
+    Calcular los eigenvectores
+    Retornar el eigenvector que representa la dirección de mayor varianza
+    */
+    Eigen::MatrixXf matrix = createMatrix(records);
+    //Normalizar la matriz
+    Eigen::VectorXf mean = matrix.colwise().mean();
+    matrix.rowwise() -= mean.transpose();
+    //Calcular la matriz de covarianza
+    Eigen::JacobiSVD<Eigen::MatrixXf> svd(matrix, Eigen::ComputeThinU | Eigen::ComputeThinV);
+    Eigen::MatrixXf eigenvectors = svd.matrixV();
     Eigen::VectorXf maxEigenVector= eigenvectors.col(0);
     Point<T,ndim> eigenvector;
     for (int i = 0; i < ndim; i++) {
