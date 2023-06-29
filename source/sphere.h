@@ -1,30 +1,32 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include "record.h"
+#include <eigen/Dense>
 
-template<class T, int ndim>
+using namespace Eigen;
+
+template<int ndim>
 struct Sphere{
-    Point<T, ndim> center;
-    T radius;
-    Sphere(Point<T, ndim> &center, T radius){
-        this->center = Point<T, ndim>(center);
-        this->radius = radius;
+
+    using Sphere_ = Sphere<ndim>;
+
+    VectorXf center;
+    float radius;
+    Sphere(VectorXf center, float radius) : center(center), radius(radius) {}
+    Sphere() : center(VectorXf(ndim)), radius(0) {}
+    void operator=(Sphere_ &sphere){
+        center = sphere.center;
+        radius = sphere.radius;
     }
-    Sphere() : center(Point<T, ndim>()), radius(0) {}
-    void operator=(Sphere<T, ndim> other){
-        center = other.center;
-        radius = other.radius;
-    }
-    friend ostream& operator<<(ostream &os, Sphere<T, ndim> &sphere){
-        os << "Center: " << sphere.center << "\nRadius: " << sphere.radius << endl;
+    friend ostream& operator<<(ostream &os, Sphere_ &sphere){
+        os << sphere.center.transpose() << "\t" << sphere.radius;
         return os;
     }
-    T distance(Point<T, ndim> &point){
-        return center.distance(point)-radius;
+    float distance(VectorXf &point){
+        return (center-point).norm()-radius;
     }
-    T distance(Sphere<T, ndim> &sphere){
-        return center.distance(sphere.center)-radius-sphere.radius;
+    float distance(Sphere_ &sphere){
+        return (center-sphere.center).norm()-radius-sphere.radius;
     }
 };
 

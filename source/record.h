@@ -1,62 +1,43 @@
 #ifndef RECORD_H
 #define RECORD_H
 
-#include<map>
-#include "point.h"
+#define EIGEN_USE_THREADS
+#include <eigen/Dense>
+#include <string>
 
-//danceability,energy,loudness,speechiness,acousticness,instrumentalness,liveness,valence,tempo,duration_ms,genre
-const map<string,int> num_atribs = {
-    {"danceability", 0},
-    {"energy", 1},
-    {"loudness", 2},
-    {"speechiness", 3},
-    {"acousticness", 4},
-    {"instrumentalness", 5},
-    {"liveness", 6},
-    {"valence", 7},
-    {"tempo", 8},
-    {"duration_ms", 9},
-    {"genre", 10}
-};
+using namespace Eigen;
 
-template<class T, int ndim>
+template <int ndim>
 class Record{
+private:
+    VectorXf point;
+    int id;
+    string name;
 public:
-    using Point_ = Point<T, ndim>;
-    using Record_ = Record<T, ndim>;
-
-    Record(T coords[ndim], string songName, string title) : songName(songName), title(title) {
-        point.setCoords(coords);
+    using Record_ = Record<ndim>;
+    Record() : point(ndim), id(-1), name("") {}
+    Record(int id, VectorXf point, string name) : point(point), id(id), name(name) {}
+    Record(const Record_ &other) : point(other.point), id(other.id), name(other.name) {}
+    Record_& operator=(const Record_ &other){
+        point = other.point;
+        id = other.id;
+        name = other.name;
+        return *this;
     }
-
-    Point_ &getPoint(){ return point; }
-    string getSongName(){ return songName; }
-    string getTitle(){ return title; }
-    int getDimension(){ return ndim; }
-    T distance(Record_ &other){
-        return point.distance(other.getPoint());
+    VectorXf &getPoint() const { return point; }
+    int getId() const { return id; }
+    string &getName() const { return name; }
+    int getDimension() const { return ndim; }
+    float distance(const Record_ &other) const {
+        return (point - other.point).norm();
     }
-    T dotProduct(Record_ &other){
-        return point.dotProduct(other.getPoint());
+    float distance(VectorXf &other) const {
+        return (point - other).norm();
     }
-    T getAtribute(string atribute){
-        return point[num_atribs.at(atribute)];
-    }
-    string getSongName(string atribute){
-        if (atribute == "songName" || atribute == "title")
-            //Return ostream loaded
-            return atribute == "songName" ? songName : title;
-        else return "Null";
-    }
-    friend ostream& operator<<(ostream &os, Record_ &record){
-        //Print title\tgenre\tsongName\tduration_ms\ttempo
-        if (record.title != "Null") os << record.title;
-        else os << record.songName;
+    friend ostream &operator<<(ostream &os, Record_ &record){
+        os << record.name << "\t" << record.point.transpose();
         return os;
     }
-private:
-    Point_ point;
-    string songName, title;
 };
 
-#endif
+#endif // RECORD_H

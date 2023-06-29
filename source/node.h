@@ -11,24 +11,21 @@
 #include "lib_aux.h"
 
 //Cabeceras de funciones auxiliares
-template<class T, int ndim>
-Sphere<T, ndim> welzlAlgorithm(vector<Record<T, ndim>*> &records);
 
-template<class T, int ndim>
+template<int ndim>
 class Node{
 public:
-    using Point_ = Point<T, ndim>;
-    using Sphere_ = Sphere<T, ndim>;
-    using Node_ = Node<T, ndim>;
-    using Record_ = Record<T, ndim>;
+    using Sphere_ = Sphere<ndim>;
+    using Node_ = Node<ndim>;
+    using Record_ = Record<ndim>;
     using VecR_ = vector<Record_*>;
 
     Node(int maxRecords, VecR_ &records);
     void build();
-    Record_ &search(Point_ &point);
+    Record_ &search(VectorXf &point);
     bool insert(Record_ &record);
-    VecR_ rangeQuery(Point_ &center, T radius);
-    VecR_ knnQuery(Point_ &center, int k);
+    VecR_ rangeQuery(VectorXf &center, float radius);
+    VecR_ knnQuery(VectorXf &center, int k);
     void calcSphere();
 private:
     Sphere_ sphere;
@@ -39,53 +36,52 @@ private:
 };
 
 //NODE METHODS
-template<class T, int ndim>
-Node<T,ndim>::Node(int maxRecords, VecR_ &records){
+template<int ndim>
+Node<ndim>::Node(int maxRecords, VecR_ &records){
     this->maxRecords = maxRecords;
     this->records = records;
     if (records.size() > maxRecords) this->isLeaf = false;
     else this->isLeaf = true;
 }
 
-template<class T, int ndim>
-void Node<T,ndim>::calcSphere(){
-    //Calculates the sphere that contains all the records
-    //Center= centroid, radius= max distance to centroid
-    Point_ centroid;
-    T radius;
+template<int ndim>
+void Node<ndim>::calcSphere(){
+    //Calcular la hiperesfera que contiene a todos los records
+    //Center= centroide, radius= maxima distancia al centroide
+    VectorXf centroid= VectorXf::Zero(ndim);
+    float radius;
     for (Record_ *record: records){
         centroid = centroid + record->getPoint();
     }
     centroid = centroid/records.size();
     for (Record_ *record: records){
-        T dist = record->getPoint().distance(centroid);
+        float dist = record->distance(centroid);
         if (dist > radius) radius = dist;
     }
     this->sphere = Sphere_(centroid, radius);
 }
 
-template<class T, int ndim>
-void Node<T,ndim>::build(){
-    //Builds the BallTree
+template<int ndim>
+void Node<ndim>::build(){
+    //Construir el árbol de forma recursiva
     if (isLeaf) return;
     //El vector de records ya está ordenado por el factor de proyección
-    int n = records.size();
-    int median = n/2;
-    int begin = 0;
-    int end = n;
+    int median  = n/2;
+    int begin   = 0;
+    int end     = records.size();
     VecR_ leftRecords(records.begin()+begin, records.begin()+median);
     VecR_ rightRecords(records.begin()+median, records.begin()+end);
 
     //Realizar el calculo del eigenvector para cada nodo en paralelo
-    Point_ eigLeft, eigRight;
+    VectorXf eigLeft, eigRight;
     thread leftThread([&](){eigLeft = getMaxEigenvectSVD(leftRecords);});
     thread rightThread([&](){eigRight = getMaxEigenvectSVD(rightRecords);});
     leftThread.join();
     rightThread.join();
 
     //Paralelizar el ordenamiento de los records respecto al factor de proyección
-    thread leftSortThread(sortByProyFactor<T,ndim>, ref(leftRecords), ref(eigLeft));
-    thread rightSortThread(sortByProyFactor<T,ndim>, ref(rightRecords), ref(eigRight));
+    thread leftSortThread(sortByProyFactor<ndim>, ref(leftRecords), ref(eigLeft));
+    thread rightSortThread(sortByProyFactor<ndim>, ref(rightRecords), ref(eigRight));
     leftSortThread.join();
     rightSortThread.join();
     left = new Node_(maxRecords, leftRecords);
@@ -109,8 +105,8 @@ void Node<T,ndim>::build(){
     rightBuildThread.join();
 }
 
-template<class T, int ndim>
-vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
+template<int ndim>
+vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
     //Realiza una búsqueda por rango en el nodo
     //Si el nodo es una hoja, retorna los records que están dentro del rango
     //Si el nodo no es una hoja, se debe verificar si la esfera del nodo intersecta
@@ -120,7 +116,7 @@ vector<Record<T,ndim>*> Node<T,ndim>::rangeQuery(Point_ &center_, T radius_){
     VecR_ result;
     if (isLeaf){
         for (Record_ *record: records){
-            if (record->getPoint().distance(center_) <= radius_){
+            if (record->distance(center_) <= radius_){
                 result.push_back(record);
             }
         }
@@ -185,8 +181,8 @@ def constrained_nn_search(Pin, node, r, K):
     
     return Pout
 */
-template<class T, int ndim>
-vector<Record<T,ndim>*> Node<T,ndim>::knnQuery(Point_ &center_, int k){
+template<int ndim>
+vector<Record<ndim>*> Node<ndim>::knnQuery(VectorXf &center_, int k){
     //Realiza una búsqueda por k-nn en el nodo
     //Si el nodo es una hoja, retorna los k records más cercanos a center_
     //Realiza una búsqueda k-nn restringida de acuerdo al siguiente artículo:
