@@ -18,7 +18,7 @@ def clear_csv():
     #El dataset tiene 22 columnas, se eliminan las columnas que no se van a utilizar
     #Columnas a eliminar: 'type', 'id', 'uri', 'track_href', 'analysis_url', 'time_signature', 'Unnamed: 0'
     #Se reemplaza las columnas sin valor por "Undefined"
-    df = df.drop(['type', 'id', 'key', 'uri', 'mode', 'track_href', 'analysis_url', 'time_signature', 'Unnamed: 0'], axis=1)
+    df = df.drop(['type', 'id', 'key', 'uri', 'mode', 'track_href', 'analysis_url', 'time_signature', 'Unnamed: 0', 'title'], axis=1)
     #key=[0,1,2,3,4,5,6,7,8,9,10,11]
     #mode=[0,1]
     #time_signature=[1,3,4,5]

@@ -7,10 +7,7 @@
 #include<mutex>
 #include "record.h"
 #include "sphere.h"
-#include "eig_aux.h"
-#include "lib_aux.h"
-
-//Cabeceras de funciones auxiliares
+#include "lib.h"
 
 template<int ndim>
 class Node{
@@ -61,29 +58,28 @@ void Node<ndim>::calcSphere(){
     this->sphere = Sphere_(centroid, radius);
 }
 
+/*
+    @brief Función que construye el árbol de forma recursiva
+*/
 template<int ndim>
 void Node<ndim>::build(){
     //Construir el árbol de forma recursiva
     if (isLeaf) return;
+
     //El vector de records ya está ordenado por el factor de proyección
-    int median  = n/2;
-    int begin   = 0;
     int end     = records.size();
-    VecR_ leftRecords(records.begin()+begin, records.begin()+median);
+    int median  = end/2;
+    
+    VecR_ leftRecords(records.begin(), records.begin()+median);
     VecR_ rightRecords(records.begin()+median, records.begin()+end);
 
-    //Realizar el calculo del eigenvector para cada nodo en paralelo
-    VectorXf eigLeft, eigRight;
-    thread leftThread([&](){eigLeft = getMaxEigenvectSVD(leftRecords);});
-    thread rightThread([&](){eigRight = getMaxEigenvectSVD(rightRecords);});
-    leftThread.join();
-    rightThread.join();
-
     //Paralelizar el ordenamiento de los records respecto al factor de proyección
-    thread leftSortThread(sortByProyFactor<ndim>, ref(leftRecords), ref(eigLeft));
-    thread rightSortThread(sortByProyFactor<ndim>, ref(rightRecords), ref(eigRight));
+    thread leftSortThread(&sortRecords<ndim>, ref(leftRecords));
+    thread rightSortThread(&sortRecords<ndim>, ref(rightRecords));
     leftSortThread.join();
     rightSortThread.join();
+
+    //Crear los nodos hijos
     left = new Node_(maxRecords, leftRecords);
     right = new Node_(maxRecords, rightRecords);
 
@@ -105,14 +101,15 @@ void Node<ndim>::build(){
     rightBuildThread.join();
 }
 
+
+/*
+    @brief Busca los records dentro de un radio de un punto
+    @param center_ : punto central de la esfera de búsqueda
+    @param radius_ : radio de la esfera de búsqueda
+    @return vector de records que se encuentran dentro de la esfera de búsqueda
+*/
 template<int ndim>
 vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
-    //Realiza una búsqueda por rango en el nodo
-    //Si el nodo es una hoja, retorna los records que están dentro del rango
-    //Si el nodo no es una hoja, se debe verificar si la esfera del nodo intersecta
-    //con la esfera de búsqueda, si no intersecta, retornar un vector vacío
-    //Si intersecta, llamar recursivamente a rangeQuery para cada hijo
-    //y retornar la unión de los resultados
     VecR_ result;
     if (isLeaf){
         for (Record_ *record: records){

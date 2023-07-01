@@ -1,25 +1,33 @@
+#ifndef LIB_H
+#define LIB_H
+
 #define EIGEN_USE_THREADS
 #include <eigen/Dense>
 #include <thread>
 #include <vector>
+#include <algorithm>
 #include "record.h"
 
-// Función para crear la matriz desde un vector de punteros a Records utilizando la paralelización
+/*
+    * @brief Crea una matriz de Eigen a partir de un vector de records
+    * @param records: vector de records
+    * @return: matriz de Eigen
+*/
 template<int ndim>
 MatrixXf createMatrix(const std::vector<Record<ndim>*>& records) {
     // Tamaño de la matriz
     int numRecords = records.size();
     int numDimensions = records[0]->getDimension();
-    // Crear la matriz y reservar espacio
+
+    // Crear la matriz con espacio reservado
     MatrixXf matrix(numRecords, numDimensions);
 
     // Definir el número de hilos
     int numThreads = std::thread::hardware_concurrency();
 
     // Dividir el trabajo entre los hilos
-    int chunkSize = numRecords / numThreads;
-    int start = 0;
-    int end = 0;
+    int divSize = numRecords / numThreads;
+    int start, end;
 
     // Función que asigna los puntos a la matriz en paralelo
     auto assignPointsToMatrix = [&](int start, int end) {
@@ -31,8 +39,8 @@ MatrixXf createMatrix(const std::vector<Record<ndim>*>& records) {
     // Crear los hilos y asignar el trabajo
     std::vector<std::thread> threads;
     for (int i = 0; i < numThreads-1; i++) {
-        start = i * chunkSize;
-        end = start + chunkSize;
+        start = i * divSize;
+        end = start + divSize;
         threads.emplace_back(assignPointsToMatrix, start, end);
     }
     threads.emplace_back(assignPointsToMatrix, end, numRecords);
@@ -44,14 +52,13 @@ MatrixXf createMatrix(const std::vector<Record<ndim>*>& records) {
     return matrix;
 }
 
+/*
+    * @brief Calcula el eigenvector de mayor valor propio de una matriz usando PCA
+    * @param records: vector de records
+    * @return: eigenvector de mayor valor propio
+*/
 template<class T, int ndim>
 VectorXf getMaxEigenvectPCA(const std::vector<Record<ndim>*>& records){
-    /*
-    Crear la matriz de puntos
-    Calcular la matriz de covarianza
-    Calcular los eigenvectores
-    Retornar el eigenvector que representa la dirección de mayor varianza
-    */
     MatrixXf matrix = createMatrix(records);
     //Normalizar la matriz
     VectorXf mean = matrix.colwise().mean();
@@ -63,13 +70,13 @@ VectorXf getMaxEigenvectPCA(const std::vector<Record<ndim>*>& records){
     return eigenvectors.col(0);
 }
 
+/*
+    * @brief Calcula el eigenvector de mayor valor propio de una matriz usando SVD
+    * @param records: vector de records
+    * @return: eigenvector de mayor valor propio
+*/
 template<int ndim>
 VectorXf getMaxEigenvectSVD(const std::vector<Record<ndim>*>& records){
-    /*
-    Crear la matriz de puntos
-    Calcular los eigenvectores
-    Retornar el eigenvector que representa la dirección de mayor varianza
-    */
     MatrixXf matrix = createMatrix(records);
     //Normalizar la matriz
     VectorXf mean = matrix.colwise().mean();
@@ -79,6 +86,11 @@ VectorXf getMaxEigenvectSVD(const std::vector<Record<ndim>*>& records){
     return eigenvectors.col(0);
 }
 
+/*
+    * @brief Método de la potencia para calcular el eigenvector aproximado de mayor valor propio de una matriz
+    * @param records: vector de records
+    * @return: eigenvector aproximado de mayor valor propio
+*/
 template<int ndim>
 VectorXd powerIteration(MatrixXf &matrix, int iterations){
     VectorXf eigenvector = VectorXf::Random(ndim);
@@ -90,6 +102,11 @@ VectorXd powerIteration(MatrixXf &matrix, int iterations){
     return eigenvector;
 }
 
+/*
+    * @brief Calcula el eigenvector aproximado de mayor valor propio de una matriz usando el método de la potencia
+    * @param records: vector de records
+    * @return: eigenvector aproximado de mayor valor propio
+*/
 template<int ndim>
 VectorXd getMaxEigenvectApprox(const std::vector<Record<ndim>*>& records, int iterations){
     MatrixXf matrix = createMatrix(records);
@@ -100,3 +117,31 @@ VectorXd getMaxEigenvectApprox(const std::vector<Record<ndim>*>& records, int it
     MatrixXf cov = (matrix.transpose() * matrix)/(matrix.rows()-1);
     return powerIteration<ndim>(cov, iterations);
 }
+
+/*
+    * @brief Calcula el factor de proyección de un punto sobre un eigenvector
+    * @param eigenvect: eigenvector
+    * @param point: punto
+    * @return: factor de proyección
+*/
+template<int ndim>
+float proyFactor(VectorXf &eigenvect, VectorXf &point){
+    return eigenvect.dot(point) / eigenvect.squaredNorm();
+}
+
+/*
+    * @brief Ordena un vector de records por el factor de proyección sobre el eigenvector de mayor valor propio
+    * @param records: vector de records
+*/
+template<int ndim>
+void sortByProyFactor(vector<Record<ndim>*> &records){
+    // Obtener el eigenvector de mayor valor propio
+    VectorXf eigenvect = getMaxEigenvectPCA(records);
+
+    // Ordena records por el factor de proyección sobre eigenvect
+    sort(records.begin(), records.end(), [&eigenvect](Record<ndim> *a, Record<ndim> *b){
+        return proyFactor(eigenvect, a->getPoint()) < proyFactor(eigenvect, b->getPoint());
+    });
+}
+
+#endif // LIB_H
