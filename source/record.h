@@ -2,10 +2,11 @@
 #define RECORD_H
 
 #define EIGEN_USE_THREADS
-#include <eigen/Dense>
+#include <eigen3/Eigen/Dense>
 #include <string>
 
 using namespace Eigen;
+using namespace std;
 
 /*
     @brief Estructura que representa una canción
@@ -30,9 +31,6 @@ struct Record{
         name = other.name;
         return *this;
     }
-    VectorXf &getPoint() const { return point; }
-    int getId() const { return id; }
-    string &getName() const { return name; }
     int getDimension() const { return ndim; }
     float distance(const Record_ &other) const {
         return (point - other.point).norm();

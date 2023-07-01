@@ -14,6 +14,6 @@ void run(BallTree<DIM> &balltree){
 
 int main()
 {
-  BallTree<DIM> balltree(50, "songs_final.csv");
+  BallTree<DIM> balltree(700, "songs_final.csv");
   cout << "Indexing time: " << balltree.getIndexingTime() << endl;
 }

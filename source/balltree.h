@@ -14,6 +14,7 @@ const string FILENAME = "song_final.csv";
 //Constantes de normalización para duration_ms y tempo
 const float MAX_DURATION = 913052.0;
 const float MAX_TEMPO = 220.29;
+
 using namespace std;
 
 template<int ndim>
@@ -112,7 +113,7 @@ void BallTree<ndim>::load(string filename){
 template<int ndim>
 void BallTree<ndim>::indexing(){
     //Ordenar los records por el factor de proyección para el root
-    sortByProyFactor<ndim>(records, eig);
+    sortByProyFactor<ndim>(records);
     //Construir el root
     root = new Node_(maxRecords, records);
     //Calcular la esfera para el root
@@ -133,7 +134,7 @@ vector<string> BallTree<ndim>::by_atribute(string atribute, float value){
     vector<string> result;
     for (Record_ *record: records){
         if (record->point[coordNames[atribute]] == value){
-            result.push_back(record->getName());
+            result.push_back(record->name);
         }
     }
     return result;

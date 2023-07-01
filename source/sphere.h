@@ -1,7 +1,7 @@
 #ifndef SPHERE_H
 #define SPHERE_H
 
-#include <eigen/Dense>
+#include <eigen3/Eigen/Dense>
 
 using namespace Eigen;
 
@@ -14,7 +14,7 @@ struct Sphere{
     float radius;
     Sphere(VectorXf center, float radius) : center(center), radius(radius) {}
     Sphere() : center(VectorXf(ndim)), radius(0) {}
-    void operator=(Sphere_ &sphere){
+    void operator=(Sphere_ sphere){
         center = sphere.center;
         radius = sphere.radius;
     }

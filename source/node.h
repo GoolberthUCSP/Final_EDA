@@ -4,10 +4,11 @@
 #include <vector>
 #include<thread>
 #include<string>
-#include<mutex>
 #include "record.h"
 #include "sphere.h"
 #include "lib.h"
+
+using namespace std;
 
 template<int ndim>
 class Node{
@@ -48,7 +49,7 @@ void Node<ndim>::calcSphere(){
     VectorXf centroid= VectorXf::Zero(ndim);
     float radius;
     for (Record_ *record: records){
-        centroid = centroid + record->getPoint();
+        centroid = centroid + record->point;
     }
     centroid = centroid/records.size();
     for (Record_ *record: records){
@@ -74,8 +75,8 @@ void Node<ndim>::build(){
     VecR_ rightRecords(records.begin()+median, records.begin()+end);
 
     //Paralelizar el ordenamiento de los records respecto al factor de proyección
-    thread leftSortThread(&sortRecords<ndim>, ref(leftRecords));
-    thread rightSortThread(&sortRecords<ndim>, ref(rightRecords));
+    thread leftSortThread(&sortByProyFactor<ndim>, ref(leftRecords));
+    thread rightSortThread(&sortByProyFactor<ndim>, ref(rightRecords));
     leftSortThread.join();
     rightSortThread.join();
 
