@@ -12,6 +12,7 @@
 
 *.csv
 *.exe
+main # ignore the main executable
 
 
 # User-specific files (MonoDevelop/Xamarin Studio)
