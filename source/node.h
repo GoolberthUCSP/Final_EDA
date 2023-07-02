@@ -4,11 +4,25 @@
 #include <vector>
 #include<thread>
 #include<string>
+#include<set>
 #include "record.h"
 #include "sphere.h"
 #include "lib.h"
 
 using namespace std;
+
+template<int ndim>
+struct neighbor{
+    Record<ndim> *record;
+    float distance;
+    neighbor(Record<ndim> *record, float distance){
+        this->record = record;
+        this->distance = distance;
+    }
+    bool operator<(const neighbor &other) const{
+        return distance < other.distance;
+    }
+};
 
 template<int ndim>
 class Node{
@@ -23,7 +37,7 @@ public:
     Record_ &search(VectorXf &point);
     bool insert(Record_ &record);
     VecR_ rangeQuery(VectorXf &center, float radius);
-    VecR_ knnQuery(VectorXf &center, int k);
+    void knnQuery(VectorXf &center, int k, float radius_, multiset<neighbor> &neighbors_);
     void calcSphere();
 private:
     Sphere_ sphere;
@@ -180,15 +194,23 @@ def constrained_nn_search(Pin, node, r, K):
     return Pout
 */
 template<int ndim>
-vector<Record<ndim>*> Node<ndim>::knnQuery(VectorXf &center_, int k){
+void Node<ndim>::knnQuery(VectorXf &center_, int k, float radius_, multiset<neighbor> &neighbors_){
     //Realiza una búsqueda por k-nn en el nodo
     //Si el nodo es una hoja, retorna los k records más cercanos a center_
     //Realiza una búsqueda k-nn restringida de acuerdo al siguiente artículo:
     //Ball*-tree: Efficient spatial indexing for constrained nearest-neighbor search in metric spaces
     //El criterio del artículo es que realiza la búsqueda k-nn usando búsqueda por rango
-    VecR_ result;
+
     if (isLeaf){
-        return result;
+        for (Record_ *record: records){
+            float distance = record->distance(center_);
+            if (distance <= radius_){
+                neighbors_.insert(neighbor(record, distance));
+                if (neighbors_.size() > k)
+                    neighbors_.erase(--neighbors_.end());
+            }
+        }
+        return;
     }
 }
 

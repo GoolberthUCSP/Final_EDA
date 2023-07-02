@@ -45,7 +45,7 @@ private:
     int maxRecords;
     VectorXf normalizer;
     map<string, int> coordNames;
-    double indexingTime;
+    int indexingTime;
 };
 
 //BALLTREE METHODS
@@ -60,7 +60,7 @@ BallTree<ndim>::BallTree(int maxRecords, string filename){
     auto start = chrono::steady_clock::now();
     indexing();
     auto end = chrono::steady_clock::now();
-    indexingTime = chrono::duration_cast<chrono::milliseconds>(end - start).count();
+    indexingTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 }
 
 /*
@@ -162,7 +162,14 @@ vector<string> BallTree<ndim>::rangeQuery(VectorXf &center, float radius){
 template<int ndim>
 vector<string> BallTree<ndim>::knnQuery(VectorXf &center, int k){
     //normalize(center);
-    return root->knnQuery(center, k);
+    multiset<neighbor> neighbors;
+    float radius = k/10.0;
+    root->knnQuery(center, k, radius, neighbors);
+    vector<string> result;
+    for (auto it= neighbors.begin(); it!= neighbors.end(); it++){
+        result.push_back(it->name);
+    }
+    return result;
 }
 
 template<int ndim>
