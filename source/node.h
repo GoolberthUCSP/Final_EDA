@@ -37,8 +37,9 @@ public:
     Record_ &search(VectorXf &point);
     bool insert(Record_ &record);
     VecR_ rangeQuery(VectorXf &center, float radius);
-    void knnQuery(VectorXf &center, int k, float radius_, multiset<neighbor> &neighbors_);
+    void knnQuery(VectorXf &center, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_);
     void calcSphere();
+    float getDistance(VectorXf &center);
 private:
     Sphere_ sphere;
     Node_ *left, *right;
@@ -143,24 +144,12 @@ vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
     result.insert(result.end(), rightResult.begin(), rightResult.end());
     return result;
 }
-/*Knn
 
-The K-NN (K-Nearest Neighbors) search always returns the K
- nearest neighbors to the target point. We will briefly 
- explain the K-NN search method in Ball-tree, as proposed by Liu et al [22].
-The algorithm considers a list of points P that contains the points found 
-so far as the nearest neighbors of the target point (t). Additionally, 
-let Ds be the minimum distance from the target point to the previously 
-discovered nodes, Ds = max x∈P in |x−t|, and DN be the distance between t and the current node.
-
-DN = max{DN.Parent, |t − center(N)| − radius(N)}
-
-In the K-NN search algorithm, a node is expanded if DN < Ds. If the current node is a leaf, 
-then every data point x in N that satisfies ||x − t|| < Ds is added to the results list. 
-When the size of the K-NN list exceeds the limit K, the farthest point is removed from the 
-list, and Ds is updated for further execution.
-
-Knn-constrained
+template<int ndim>
+float Node<ndim>::getDistance(VectorXf &center){
+    return (sphere.center-center).norm()- sphere.radius;
+}
+/*Knn-constrained
 
 Constrained K-NN Search in Ball*-Tree
 Our key idea for implementing range-constrained K-NN search is to combine the K-NN and range 
@@ -194,24 +183,23 @@ def constrained_nn_search(Pin, node, r, K):
     return Pout
 */
 template<int ndim>
-void Node<ndim>::knnQuery(VectorXf &center_, int k, float radius_, multiset<neighbor> &neighbors_){
-    //Realiza una búsqueda por k-nn en el nodo
-    //Si el nodo es una hoja, retorna los k records más cercanos a center_
-    //Realiza una búsqueda k-nn restringida de acuerdo al siguiente artículo:
-    //Ball*-tree: Efficient spatial indexing for constrained nearest-neighbor search in metric spaces
-    //El criterio del artículo es que realiza la búsqueda k-nn usando búsqueda por rango
+void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_){
 
     if (isLeaf){
+        float distance, maxOfList;
         for (Record_ *record: records){
-            float distance = record->distance(center_);
-            if (distance <= radius_){
-                neighbors_.insert(neighbor(record, distance));
-                if (neighbors_.size() > k)
-                    neighbors_.erase(--neighbors_.end());
+            distance = record->distance(center_);
+            neighbors_.insert(neighbor(record, distance));
+            if (neighbors_.size() > k){
+                neighbors_.erase(--neighbors_.end());
             }
         }
+        radius_= (*neighbors_.rbegin()).distance;
         return;
     }
+    float dLeft= left->getDistance(center);
+    float dRight= right->getDistance(center);
+    
 }
 
 //Auxiliary functions

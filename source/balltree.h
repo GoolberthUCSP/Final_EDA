@@ -33,11 +33,16 @@ public:
     bool insert(Record_ &record);
     VecS_ by_atribute(string atribute, float value);
     VecS_ rangeQuery(VectorXf &center, float radius);
-    VecS_ knnQuery(VectorXf &center, int k);
+    VecS_ knnQuery(int id, int k);
+    VecS_ knnQuery(string name, int k);
     void normalize(VectorXf &point);
+    VectorXf getPoint(string name);
+    VectorXf getPoint(int id);
     void printDict();
 
-    double getIndexingTime(){return indexingTime;}
+    long getIndexingTime(){return indexingTime;}
+    long getKnnTime(){return knnTime;}
+    long getRangeTime(){return rangeTime;}
 
 private:
     Node_ *root;
@@ -45,7 +50,9 @@ private:
     int maxRecords;
     VectorXf normalizer;
     map<string, int> coordNames;
-    int indexingTime;
+    long indexingTime;
+    long knnTime;
+    long rangeTime;
 };
 
 //BALLTREE METHODS
@@ -152,25 +159,86 @@ vector<string> BallTree<ndim>::rangeQuery(VectorXf &center, float radius){
     return root->rangeQuery(center, radius);
 }
 
+/*
+    @brief Obtiene el punto de la canción con name
+    @param name: nombre de la canción
+    @return VectorXf con el punto de la canción
+*/
+template<int ndim>
+VectorXf BallTree<ndim>::getPoint(string name){
+    for (Record_ *record: records){
+        if (record->name == name){
+            return record->point;
+        }
+    }
+    return VectorXf::Zero(ndim);
+}
+
+/*
+    @brief Obtiene el punto de la canción con id
+    @param id: id de la canción
+    @return VectorXf con el punto de la canción
+*/
+template<int ndim>
+VectorXf BallTree<ndim>::getPoint(int id){
+    for (Record_ *record: records){
+        if (record->id == id){
+            return record->point;
+        }
+    }
+    return VectorXf::Zero(ndim);
+}
 
 /*
     @brief Llama a knnQuery del root
-    @param center: centro de la esfera
+    @param id: id de la canción
     @param k: cantidad de vecinos más cercanos a buscar
     @return vector<string> con los nombres de las k canciones más cercanas
 */
 template<int ndim>
-vector<string> BallTree<ndim>::knnQuery(VectorXf &center, int k){
-    //normalize(center);
-    multiset<neighbor> neighbors;
-    float radius = k/10.0;
+vector<string> BallTree<ndim>::knnQuery(int id, int k){
+    //Obtener el punto de la canción con id
+    VectorXf center = getPoint(id);
+    multiset<neighbor<ndim>> neighbors;
+    float radius = 1.0;
+    initialize(neighbors, radius);
+
+    auto start = chrono::steady_clock::now();
     root->knnQuery(center, k, radius, neighbors);
+    auto end = chrono::steady_clock::now();
+    knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+
     vector<string> result;
     for (auto it= neighbors.begin(); it!= neighbors.end(); it++){
         result.push_back(it->name);
     }
     return result;
 }
+/*
+    @brief Llama a knnQuery del root
+    @param name: nombre de la canción
+    @param k: cantidad de vecinos más cercanos a buscar
+    @return vector<string> con los nombres de las k canciones más cercanas
+*/
+template<int ndim>
+vector<string> BallTree<ndim>::knnQuery(string name, int k){
+    //Obtener el punto de la canción con id
+    VectorXf center = getPoint(name);
+    multiset<neighbor<ndim>> neighbors;
+    float radius = k/10.0;
+
+    auto start = chrono::steady_clock::now();
+    root->knnQuery(center, k, radius, neighbors);
+    auto end = chrono::steady_clock::now();
+    knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+    
+    vector<string> result;
+    for (auto it= neighbors.begin(); it!= neighbors.end(); it++){
+        result.push_back(it->name);
+    }
+    return result;
+}
+
 
 template<int ndim>
 void BallTree<ndim>::printDict(){
