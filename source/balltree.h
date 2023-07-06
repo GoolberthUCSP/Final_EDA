@@ -282,7 +282,7 @@ vector<string> BallTree<ndim>::linearKnn(int id, int k){
     multiset<neighbor<ndim>> neighbors;
     for (auto record: records){
         float distance= (center - record->point).norm();
-        neighbors.insert(neighbor(record, distance));
+        neighbors.insert(neighbor<ndim>(record, distance));
         if (neighbors.size() > k+1)
             neighbors.erase(--neighbors.end());
     }

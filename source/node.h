@@ -195,7 +195,7 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
             float distance, maxOfList;
             for (Record_ *record: records){
                 distance = record->distance(center_);
-                neighbors_.insert(neighbor(record, distance));
+                neighbors_.insert(neighbor<ndim>(record, distance));
                 if (neighbors_.size() > k){
                     neighbors_.erase(--neighbors_.end());
                 }
@@ -212,7 +212,7 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
         float distance, maxOfList;
         for (Record_ *record: records){
             distance = record->distance(center_);
-            neighbors_.insert(neighbor(record, distance));
+            neighbors_.insert(neighbor<ndim>(record, distance));
             if (neighbors_.size() > k){
                 neighbors_.erase(--neighbors_.end());
             }
