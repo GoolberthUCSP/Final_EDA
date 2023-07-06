@@ -32,7 +32,7 @@ public:
     using Record_ = Record<ndim>;
     using VecR_ = vector<Record_*>;
 
-    Node(int maxRecords, VecR_ &records);
+    Node(size_t maxRecords, VecR_ &records);
     void build();
     Record_ &search(VectorXf &point);
     bool insert(Record_ &record);
@@ -46,12 +46,12 @@ private:
     Node_ *left, *right;
     VecR_ records;
     bool isLeaf;
-    int maxRecords;
+    size_t maxRecords;
 };
 
 //NODE METHODS
 template<int ndim>
-Node<ndim>::Node(int maxRecords, VecR_ &records){
+Node<ndim>::Node(size_t maxRecords, VecR_ &records){
     this->maxRecords = maxRecords;
     this->records = records;
     if (records.size() > maxRecords) this->isLeaf = false;
@@ -146,11 +146,22 @@ vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
     return result;
 }
 
+/*
+    @brief Distancia entre la esfera del nodo a la esfera de búsqueda
+    @param center_ : punto central de la esfera de búsqueda
+    @param radius_ : radio de la esfera de búsqueda
+    @return distancia entre la esfera del nodo y la esfera de búsqueda
+*/
 template<int ndim>
 float Node<ndim>::getDistance(VectorXf &center, float &radius_){
     return (sphere.center-center).norm() - sphere.radius - radius_;
 }
 
+/*
+    @brief Booleano que indica si el punto está dentro de la esfera del nodo
+    @param center_ : punto central de la esfera de búsqueda
+    @return true si el punto está dentro de la esfera del nodo, false en caso contrario
+*/
 template<int ndim>
 bool Node<ndim>::isInside(VectorXf &center){
     return ((sphere.center-center).norm() - sphere.radius) <= 0.0;
@@ -188,44 +199,73 @@ def constrained_nn_search(Pin, node, r, K):
     
     return Pout
 */
+
+/*
+    @brief Busca los k vecinos más cercanos a un punto
+    @param center_ : punto central de la esfera de búsqueda
+    @param k : número de vecinos a buscar
+    @param radius_ : radio de la esfera de búsqueda
+    @param neighbors_ : multiset de vecinos encontrados
+    @return Guarda los k vecinos más cercanos en neighbors_
+*/
 template<int ndim>
 void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_){
-    if (neighbors_.size()==0){
-        if (isLeaf){
-            float distance, maxOfList;
-            for (Record_ *record: records){
-                distance = record->distance(center_);
-                neighbors_.insert(neighbor<ndim>(record, distance));
-                if (neighbors_.size() > k){
-                    neighbors_.erase(--neighbors_.end());
-                }
-            }
-            radius_= (*neighbors_.rbegin()).distance;
-        }
-        if (left->isInside(center_))
-            left->knnQuery(center_, k, radius_, neighbors_);
-        if (right->isInside(center_))
-            right->knnQuery(center_, k, radius_, neighbors_);
-    }
-
     if (isLeaf){
         float distance, maxOfList;
         for (Record_ *record: records){
+
             distance = record->distance(center_);
-            neighbors_.insert(neighbor<ndim>(record, distance));
-            if (neighbors_.size() > k){
-                neighbors_.erase(--neighbors_.end());
+            
+            if (distance <= radius_){
+                neighbors_.insert(neighbor<ndim>(record, distance));
+                if (neighbors_.size() > k){
+                    maxOfList = (--neighbors_.end())->distance;
+                    neighbors_.erase(--neighbors_.end());
+                    radius_ = maxOfList;
+                }
             }
+
         }
-        radius_= (*neighbors_.rbegin()).distance;
         return;
     }
+    //Si la distancia es negativa, el nodo está dentro de la esfera de búsqueda
     float dLeft= left->getDistance(center_, radius_);
     float dRight= right->getDistance(center_, radius_);
+    
+    if (dLeft <= 0.0)
+        left->knnQuery(center_, k, radius_, neighbors_);
+
+    if (dRight <= 0.0)
+        right->knnQuery(center_, k, radius_, neighbors_);
 
 }
 
-//Auxiliary functions
-
+//Welzl's algorithm
+/*
+    @brief Calcula la esfera mínima que contiene a todos los puntos de un nodo
+*/
+void welzl(const std::vector<VectorXf>& points, VectorXf& center, float& radius) {
+    size_t n = points.size();
+    
+    if (n == 0) {
+        center.setZero();
+        radius = 0.0f;
+        return;
+    }
+    
+    center = points[0];
+    radius = 0.0f;
+    
+    for (size_t i = 1; i < n; ++i) {
+        const VectorXf& p = points[i];
+        if ((p - center).norm() > radius) {
+            float d = (p - center).norm();
+            float newRadius = (d + radius) / 2.0f;
+            float ratio = (newRadius - radius) / d;
+            center += ratio * (p - center);
+            radius = newRadius;
+        }
+    }
+}
 
 #endif // NODE_H

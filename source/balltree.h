@@ -232,6 +232,7 @@ vector<string> BallTree<ndim>::knnQuery(int id, int k){
     }
     return result;
 }
+
 /*
     @brief Llama a knnQuery del root
     @param name: nombre de la canción

@@ -10,7 +10,7 @@ using namespace std;
 
 /*
     @brief Estructura que representa una canción
-    @tparam ndim: número de dimensiones del vector de características
+    @param ndim: Dimensión de las características de la canción
 */
 template <int ndim>
 struct Record{
