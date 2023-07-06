@@ -39,7 +39,8 @@ public:
     VecR_ rangeQuery(VectorXf &center, float radius);
     void knnQuery(VectorXf &center, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_);
     void calcSphere();
-    float getDistance(VectorXf &center);
+    float getDistance(VectorXf &center, float &radius_);
+    bool isInside(VectorXf &center);
 private:
     Sphere_ sphere;
     Node_ *left, *right;
@@ -146,8 +147,13 @@ vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
 }
 
 template<int ndim>
-float Node<ndim>::getDistance(VectorXf &center){
-    return (sphere.center-center).norm()- sphere.radius;
+float Node<ndim>::getDistance(VectorXf &center, float &radius_){
+    return (sphere.center-center).norm() - sphere.radius - radius_;
+}
+
+template<int ndim>
+bool Node<ndim>::isInside(VectorXf &center){
+    return ((sphere.center-center).norm() - sphere.radius) <= 0.0;
 }
 /*Knn-constrained
 
@@ -184,6 +190,23 @@ def constrained_nn_search(Pin, node, r, K):
 */
 template<int ndim>
 void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_){
+    if (neighbors_.size()==0){
+        if (isLeaf){
+            float distance, maxOfList;
+            for (Record_ *record: records){
+                distance = record->distance(center_);
+                neighbors_.insert(neighbor(record, distance));
+                if (neighbors_.size() > k){
+                    neighbors_.erase(--neighbors_.end());
+                }
+            }
+            radius_= (*neighbors_.rbegin()).distance;
+        }
+        if (left->isInside(center_))
+            left->knnQuery(center_, k, radius_, neighbors_);
+        if (right->isInside(center_))
+            right->knnQuery(center_, k, radius_, neighbors_);
+    }
 
     if (isLeaf){
         float distance, maxOfList;
@@ -197,9 +220,9 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
         radius_= (*neighbors_.rbegin()).distance;
         return;
     }
-    float dLeft= left->getDistance(center);
-    float dRight= right->getDistance(center);
-    
+    float dLeft= left->getDistance(center_, radius_);
+    float dRight= right->getDistance(center_, radius_);
+
 }
 
 //Auxiliary functions

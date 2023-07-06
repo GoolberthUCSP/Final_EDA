@@ -6,8 +6,10 @@
 #include<sstream>
 #include<thread>
 #include<string>
-#include<map>
+#include<unordered_map>
 #include<chrono>
+#include<climits>
+#include<iostream>
 #include "node.h"
 const string FILENAME = "song_final.csv";
 
@@ -30,7 +32,7 @@ public:
     BallTree(int maxRecords, string filename= FILENAME);
     void load(string filename);
     void indexing();
-    bool insert(Record_ &record);
+    void insert(Record_ &record);
     VecS_ by_atribute(string atribute, float value);
     VecS_ rangeQuery(VectorXf &center, float radius);
     VecS_ knnQuery(int id, int k);
@@ -38,6 +40,9 @@ public:
     void normalize(VectorXf &point);
     VectorXf getPoint(string name);
     VectorXf getPoint(int id);
+
+    vector<string> linearKnn(int id, int k);
+    
     void printDict();
 
     long getIndexingTime(){return indexingTime;}
@@ -49,7 +54,7 @@ private:
     VecR_ records;
     int maxRecords;
     VectorXf normalizer;
-    map<string, int> coordNames;
+    unordered_map<string, int> coordNames;
     long indexingTime;
     long knnTime;
     long rangeTime;
@@ -64,6 +69,7 @@ BallTree<ndim>::BallTree(int maxRecords, string filename){
     // normalizer[8] = MAX_TEMPO;
     // normalizer[9] = MAX_DURATION;
     load(filename);
+    
     auto start = chrono::steady_clock::now();
     indexing();
     auto end = chrono::steady_clock::now();
@@ -175,6 +181,18 @@ VectorXf BallTree<ndim>::getPoint(string name){
 }
 
 /*
+    @brief Inserta el record en la lista de records y reconstruye el árbol
+    @param record: registro a insertar
+*/
+template<int ndim>
+void BallTree<ndim>::insert(Record_ &record){
+    //Insertar el record en el root
+    records.push_back(&record);
+    //Reconstruir el árbol con el nuevo record añadido
+    indexing();
+}
+
+/*
     @brief Obtiene el punto de la canción con id
     @param id: id de la canción
     @return VectorXf con el punto de la canción
@@ -225,26 +243,58 @@ vector<string> BallTree<ndim>::knnQuery(string name, int k){
     //Obtener el punto de la canción con id
     VectorXf center = getPoint(name);
     multiset<neighbor<ndim>> neighbors;
-    float radius = k/10.0;
+    float radius = numeric_limits<float>::max();
 
     auto start = chrono::steady_clock::now();
-    root->knnQuery(center, k, radius, neighbors);
+    root->knnQuery(center, k+1, radius, neighbors);
     auto end = chrono::steady_clock::now();
     knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
     
     vector<string> result;
-    for (auto it= neighbors.begin(); it!= neighbors.end(); it++){
+    auto it= neighbors.begin();
+    it++;
+    for (; it!= neighbors.end(); it++){
         result.push_back(it->name);
     }
     return result;
 }
 
-
+/*
+    @brief Imprime el diccionario de atributos numéricos
+*/
 template<int ndim>
 void BallTree<ndim>::printDict(){
     for (auto it= coordNames.begin(); it!= coordNames.end(); it++){
         cout << it->first << ": " << it->second << endl;
     }
+}
+
+
+/*
+    @brief Retorna los k vecinos más cercanos de id usando fuerza bruta
+    @param id: id de la canción
+    @param k: cantidad de vecinos más cercanos a buscar
+    @return vector<string> con los nombres de las k canciones más cercanas
+*/
+template<int ndim>
+vector<string> BallTree<ndim>::linearKnn(int id, int k){
+    VectorXf center= getPoint(id);
+    multiset<neighbor<ndim>> neighbors;
+    for (auto record: records){
+        float distance= (center - record->point).norm();
+        neighbors.insert(neighbor(record, distance));
+        if (neighbors.size() > k+1)
+            neighbors.erase(--neighbors.end());
+    }
+    vector<string> result;
+    //Se obvia el primer elemento porque es el mismo
+    auto neighbor= neighbors.begin();
+    neighbor++;
+    for(; neighbor!= neighbors.end(); neighbor++){
+        //cout << neighbor->distance << '\t' << neighbor->record->name << endl;
+        result.push_back(neighbor->record->name);
+    }
+    return result;
 }
 
 #endif
