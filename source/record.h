@@ -18,6 +18,7 @@ struct Record{
     VectorXf point;
     int id;
     string name;
+    float proyFactor;
 
     using Record_ = Record<ndim>;
 
@@ -32,9 +33,19 @@ struct Record{
         return *this;
     }
     int getDimension() const { return ndim; }
+    /*
+        @brief Calcula la distancia entre el record y otro record
+        @param other: record al que se le calculará la distancia
+        @return distancia entre el record y el otro record
+    */
     float distance(const Record_ &other) const {
         return (point - other.point).norm();
     }
+    /*
+        @brief Calcula la distancia entre el record y un punto
+        @param other: punto al que se le calculará la distancia
+        @return distancia entre el record y el punto
+    */
     float distance(VectorXf &other) const {
         return (point - other).norm();
     }

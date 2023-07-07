@@ -11,7 +11,9 @@
 #include<climits>
 #include<iostream>
 #include "node.h"
+
 const string FILENAME = "song_final.csv";
+const float MAX_FLOAT = std::numeric_limits<float>::max();
 
 //Constantes de normalización para duration_ms y tempo
 const float MAX_DURATION = 913052.0;
@@ -34,20 +36,21 @@ public:
     void indexing();
     void insert(Record_ &record);
     VecS_ by_atribute(string atribute, float value);
-    VecS_ rangeQuery(VectorXf &center, float radius);
+    VecS_ rangeQuery(int id, float radius);
     VecS_ knnQuery(int id, int k);
     VecS_ knnQuery(string name, int k);
     void normalize(VectorXf &point);
     VectorXf getPoint(string name);
     VectorXf getPoint(int id);
 
-    vector<string> linearKnn(int id, int k);
+    vector<string> linearKnnQuery(int id, int k);
     
     void printDict();
 
     long getIndexingTime(){return indexingTime;}
     long getKnnTime(){return knnTime;}
     long getRangeTime(){return rangeTime;}
+    long getLinearKnnTime(){return linearKnnTime;}
 
 private:
     Node_ *root;
@@ -58,7 +61,8 @@ private:
     long indexingTime;
     long knnTime;
     long rangeTime;
-};
+    long linearKnnTime;
+};  
 
 //BALLTREE METHODS
 template<int ndim>
@@ -145,6 +149,10 @@ void BallTree<ndim>::indexing(){
 template<int ndim>
 vector<string> BallTree<ndim>::by_atribute(string atribute, float value){
     vector<string> result;
+    if (coordNames.find(atribute) == coordNames.end()){
+        cout << "Atributo no encontrado" << endl;
+        return result;
+    }
     for (Record_ *record: records){
         if (record->point[coordNames[atribute]] == value){
             result.push_back(record->name);
@@ -160,9 +168,20 @@ vector<string> BallTree<ndim>::by_atribute(string atribute, float value){
     @return vector<string> con los nombres de las canciones que están dentro de la esfera
 */
 template<int ndim>
-vector<string> BallTree<ndim>::rangeQuery(VectorXf &center, float radius){
-    //normalize(center);
-    return root->rangeQuery(center, radius);
+vector<string> BallTree<ndim>::rangeQuery(int id, float radius){
+    VectorXf center = getPoint(id);
+    VecR_ result;
+
+    auto start = chrono::steady_clock::now();
+    result= root->rangeQuery(center, radius);
+    auto end = chrono::steady_clock::now();
+    rangeTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+
+    vector<string> names;
+    for (Record_ *record: result){
+        names.push_back(record->name);
+    }
+    return names;
 }
 
 /*
@@ -215,20 +234,25 @@ VectorXf BallTree<ndim>::getPoint(int id){
 */
 template<int ndim>
 vector<string> BallTree<ndim>::knnQuery(int id, int k){
+    if (k >= records.size()){
+        k = records.size()-1;
+    }
     //Obtener el punto de la canción con id
     VectorXf center = getPoint(id);
     multiset<neighbor<ndim>> neighbors;
-    float radius = 1.0;
-    initialize(neighbors, radius);
+    float radius = MAXFLOAT;
 
     auto start = chrono::steady_clock::now();
-    root->knnQuery(center, k, radius, neighbors);
+    
+    root->knnQuery(center, k+1, radius, neighbors);
     auto end = chrono::steady_clock::now();
     knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 
     vector<string> result;
-    for (auto it= neighbors.begin(); it!= neighbors.end(); it++){
-        result.push_back(it->name);
+    auto neighbor= neighbors.begin();
+    neighbor++;
+    for(; neighbor!=neighbors.end(); neighbor++){
+        result.push_back(neighbor->record->name);
     }
     return result;
 }
@@ -241,10 +265,13 @@ vector<string> BallTree<ndim>::knnQuery(int id, int k){
 */
 template<int ndim>
 vector<string> BallTree<ndim>::knnQuery(string name, int k){
+    if (k >= records.size()){
+        k = records.size()-1;
+    }
     //Obtener el punto de la canción con id
     VectorXf center = getPoint(name);
     multiset<neighbor<ndim>> neighbors;
-    float radius = numeric_limits<float>::max();
+    float radius = MAXFLOAT;
 
     auto start = chrono::steady_clock::now();
     root->knnQuery(center, k+1, radius, neighbors);
@@ -252,10 +279,10 @@ vector<string> BallTree<ndim>::knnQuery(string name, int k){
     knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
     
     vector<string> result;
-    auto it= neighbors.begin();
-    it++;
-    for (; it!= neighbors.end(); it++){
-        result.push_back(it->name);
+    auto neighbor= neighbors.begin();
+    neighbor++;
+    for(; neighbor!= neighbors.end(); neighbor++){
+        result.push_back(neighbor->record->name);
     }
     return result;
 }
@@ -278,21 +305,29 @@ void BallTree<ndim>::printDict(){
     @return vector<string> con los nombres de las k canciones más cercanas
 */
 template<int ndim>
-vector<string> BallTree<ndim>::linearKnn(int id, int k){
+vector<string> BallTree<ndim>::linearKnnQuery(int id, int k){
+    if (k >= records.size()){
+        k = records.size()-1;
+    }
+
     VectorXf center= getPoint(id);
     multiset<neighbor<ndim>> neighbors;
+
+    auto start = chrono::steady_clock::now();
     for (auto record: records){
         float distance= (center - record->point).norm();
         neighbors.insert(neighbor<ndim>(record, distance));
         if (neighbors.size() > k+1)
             neighbors.erase(--neighbors.end());
     }
+    auto end = chrono::steady_clock::now();
+    linearKnnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
+
     vector<string> result;
     //Se obvia el primer elemento porque es el mismo
     auto neighbor= neighbors.begin();
     neighbor++;
     for(; neighbor!= neighbors.end(); neighbor++){
-        //cout << neighbor->distance << '\t' << neighbor->record->name << endl;
         result.push_back(neighbor->record->name);
     }
     return result;

@@ -94,7 +94,7 @@ VectorXf getMaxEigenvectSVD(const std::vector<Record<ndim>*>& records){
     * @return: eigenvector aproximado de mayor valor propio
 */
 template<int ndim>
-VectorXd powerIteration(MatrixXf &matrix, int iterations){
+VectorXf powerIteration(MatrixXf &matrix, int iterations){
     VectorXf eigenvector = VectorXf::Random(ndim);
     eigenvector.normalize();
     for (int i=0; i<iterations; i++){
@@ -110,7 +110,7 @@ VectorXd powerIteration(MatrixXf &matrix, int iterations){
     * @return: eigenvector aproximado de mayor valor propio
 */
 template<int ndim>
-VectorXd getMaxEigenvectApprox(const std::vector<Record<ndim>*>& records, int iterations){
+VectorXf getMaxEigenvectApprox(const std::vector<Record<ndim>*>& records, int iterations){
     MatrixXf matrix = createMatrix<ndim>(records);
     //Normalizar la matriz
     VectorXf mean = matrix.colwise().mean();
@@ -137,11 +137,18 @@ float proyFactor(VectorXf &eigenvect, VectorXf &point){
 template<int ndim>
 void sortByProyFactor(vector<Record<ndim>*> &records){
     // Obtener el eigenvector de mayor valor propio
-    VectorXf eigenvect = getMaxEigenvectPCA<ndim>(records);
+    //VectorXf eigenvect = getMaxEigenvectPCA<ndim>(records);
+    VectorXf eigenvect = getMaxEigenvectSVD<ndim>(records);
+    //VectorXf eigenvect = getMaxEigenvectApprox<ndim>(records, 10);
+
+    //Calcular el factor de proyección de cada punto sobre el eigenvector
+    for (auto record : records){
+        record->proyFactor = proyFactor(eigenvect, record->point);
+    }
 
     // Ordena records por el factor de proyección sobre eigenvect
     sort(records.begin(), records.end(), [&eigenvect](Record<ndim> *a, Record<ndim> *b){
-        return proyFactor(eigenvect, a->point) < proyFactor(eigenvect, b->point);
+        return a->proyFactor < b->proyFactor;
     });
 }
 

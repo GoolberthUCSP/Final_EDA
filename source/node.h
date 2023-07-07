@@ -25,8 +25,7 @@ struct neighbor{
 };
 
 template<int ndim>
-class Node{
-public:
+struct Node{
     using Sphere_ = Sphere<ndim>;
     using Node_ = Node<ndim>;
     using Record_ = Record<ndim>;
@@ -39,9 +38,7 @@ public:
     VecR_ rangeQuery(VectorXf &center, float radius);
     void knnQuery(VectorXf &center, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_);
     void calcSphere();
-    float getDistance(VectorXf &center, float &radius_);
-    bool isInside(VectorXf &center);
-private:
+
     Sphere_ sphere;
     Node_ *left, *right;
     VecR_ records;
@@ -105,11 +102,6 @@ void Node<ndim>::build(){
     thread rightSphereThread(&Node_::calcSphere, right);
     leftSphereThread.join();
     rightSphereThread.join();
-    //DEBUGGING: imprimir overlap= distancia entre esferas- suma de radios
-    //cout << "Overlap: " << left->sphere.distance(right->sphere) - left->sphere.radius - right->sphere.radius << endl;
-
-    //Llamar recursivamente a build para cada nodo
-    //cout << "Left: " << leftRecords.size() << " Right: " << rightRecords.size() << endl; //DEBUGGING
     
     //Paralelizar la llamada a build para cada nodo
     thread leftBuildThread(&Node_::build, left);
@@ -147,60 +139,6 @@ vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
 }
 
 /*
-    @brief Distancia entre la esfera del nodo a la esfera de búsqueda
-    @param center_ : punto central de la esfera de búsqueda
-    @param radius_ : radio de la esfera de búsqueda
-    @return distancia entre la esfera del nodo y la esfera de búsqueda
-*/
-template<int ndim>
-float Node<ndim>::getDistance(VectorXf &center, float &radius_){
-    return (sphere.center-center).norm() - sphere.radius - radius_;
-}
-
-/*
-    @brief Booleano que indica si el punto está dentro de la esfera del nodo
-    @param center_ : punto central de la esfera de búsqueda
-    @return true si el punto está dentro de la esfera del nodo, false en caso contrario
-*/
-template<int ndim>
-bool Node<ndim>::isInside(VectorXf &center){
-    return ((sphere.center-center).norm() - sphere.radius) <= 0.0;
-}
-/*Knn-constrained
-
-Constrained K-NN Search in Ball*-Tree
-Our key idea for implementing range-constrained K-NN search is to combine the K-NN and range 
-search algorithms in ball-tree and benefit from pruning in both. The range constraint limits 
-the number of candidate nodes, while K-NN pruning filters the search nodes based on the top K
-points found so far. In other words, whenever a node is either too far from the query (in terms 
-of range) or is not likely to be among the top K points found so far, it is skipped. Algorithm 2
-presents the constrained K-NN search algorithm for ball*-tree.
-
-def constrained_nn_search(Pin, node, r, K):
-    if DN >= Ds and DN > r:
-        return Pin  # No se cumple el criterio de rango, se devuelve la lista sin cambios
-    
-    if node es una hoja:
-        Pout = Pin
-        for x in points(node):
-            if |x - t| < Ds:
-                add x to Pout
-        if |Pout| == K + 1:
-            remove farthest neighbor from Pout
-            update Ds #Ds = distance from t to farthest neighbor in Pout
-    else:
-        dR = distance from center of childR(node)
-        dL = distance from center of childL(node)
-        Ptemp = Pin
-        if dR <= radius(childR(node)) + r:
-            Ptemp = constrained_nn_search(Ptemp, childR(node), r, K)
-        if dL <= radius(childL(node)) + r:
-            Pout = constrained_nn_search(Ptemp, childL(node), r, K)
-    
-    return Pout
-*/
-
-/*
     @brief Busca los k vecinos más cercanos a un punto
     @param center_ : punto central de la esfera de búsqueda
     @param k : número de vecinos a buscar
@@ -210,6 +148,9 @@ def constrained_nn_search(Pin, node, r, K):
 */
 template<int ndim>
 void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_){
+    if (sphere.distance(center_) > radius_)
+        return;
+
     if (isLeaf){
         float distance, maxOfList;
         for (Record_ *record: records){
@@ -224,20 +165,16 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
                     radius_ = maxOfList;
                 }
             }
-
         }
-        return;
     }
-    //Si la distancia es negativa, el nodo está dentro de la esfera de búsqueda
-    float dLeft= left->getDistance(center_, radius_);
-    float dRight= right->getDistance(center_, radius_);
-    
-    if (dLeft <= 0.0)
-        left->knnQuery(center_, k, radius_, neighbors_);
+    else{
+        //Si la distancia es negativa, el nodo está dentro de la esfera de búsqueda    
+        if (left->sphere.distance(center_) <= radius_)
+            left->knnQuery(center_, k, radius_, neighbors_);
 
-    if (dRight <= 0.0)
-        right->knnQuery(center_, k, radius_, neighbors_);
-
+        if (right->sphere.distance(center_) <= radius_)
+            right->knnQuery(center_, k, radius_, neighbors_);
+    }
 }
 
 //Welzl's algorithm

@@ -22,9 +22,19 @@ struct Sphere{
         os << sphere.center.transpose() << "\t" << sphere.radius;
         return os;
     }
+    /*
+        @brief Calcula la distancia entre la esfera y un punto
+        @param point: punto al que se le calculará la distancia
+        @return distancia entre la esfera y el punto
+    */
     float distance(VectorXf &point){
         return (center-point).norm()-radius;
     }
+    /*
+        @brief Calcula la distancia entre dos esferas
+        @param sphere: esfera a la que se le calculará la distancia
+        @return distancia entre las dos esferas
+    */
     float distance(Sphere_ &sphere){
         return (center-sphere.center).norm()-radius-sphere.radius;
     }
