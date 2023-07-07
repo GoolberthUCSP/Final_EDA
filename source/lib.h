@@ -138,8 +138,7 @@ template<int ndim>
 void sortByProyFactor(vector<Record<ndim>*> &records){
     // Obtener el eigenvector de mayor valor propio
     //VectorXf eigenvect = getMaxEigenvectPCA<ndim>(records);
-    VectorXf eigenvect = getMaxEigenvectSVD<ndim>(records);
-    //VectorXf eigenvect = getMaxEigenvectApprox<ndim>(records, 10);
+    VectorXf eigenvect = getMaxEigenvectApprox<ndim>(records, 20);
 
     //Calcular el factor de proyección de cada punto sobre el eigenvector
     for (auto record : records){
