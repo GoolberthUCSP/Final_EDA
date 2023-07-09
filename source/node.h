@@ -97,7 +97,7 @@ void Node<ndim>::build(){
     //Crear los nodos hijos
     left = new Node_(maxRecords, leftRecords);
     right = new Node_(maxRecords, rightRecords);
-
+    
     //Paralelizar el cálculo de la esfera para cada nodo
     thread leftSphereThread(&Node_::welzl, left);
     thread rightSphereThread(&Node_::welzl, right);
