@@ -38,6 +38,7 @@ struct Node{
     VecR_ rangeQuery(VectorXf &center, float radius);
     void knnQuery(VectorXf &center, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_);
     void calcSphere();
+    void welzl();
 
     Sphere_ sphere;
     Node_ *left, *right;
@@ -98,8 +99,8 @@ void Node<ndim>::build(){
     right = new Node_(maxRecords, rightRecords);
 
     //Paralelizar el cálculo de la esfera para cada nodo
-    thread leftSphereThread(&Node_::calcSphere, left);
-    thread rightSphereThread(&Node_::calcSphere, right);
+    thread leftSphereThread(&Node_::welzl, left);
+    thread rightSphereThread(&Node_::welzl, right);
     leftSphereThread.join();
     rightSphereThread.join();
     
@@ -109,7 +110,6 @@ void Node<ndim>::build(){
     leftBuildThread.join();
     rightBuildThread.join();
 }
-
 
 /*
     @brief Busca los records dentro de un radio de un punto
@@ -179,22 +179,21 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
 
 //Welzl's algorithm
 /*
-    @brief Calcula la esfera mínima que contiene a todos los puntos de un nodo
+    @brief Calcula la esfera mínima que contiene a todos los puntos de un nodo en complejidad O(n)
 */
-void welzl(const std::vector<VectorXf>& points, VectorXf& center, float& radius) {
-    size_t n = points.size();
+template<int ndim>
+void Node<ndim>::welzl() {
+    //const std::vector<VectorXf>& points, VectorXf& center, float& radius
+    size_t n = records.size();
+    VectorXf center= records[0]->point;
+    float radius = 0.0f;
     
-    if (n == 0) {
-        center.setZero();
-        radius = 0.0f;
-        return;
-    }
-    
-    center = points[0];
-    radius = 0.0f;
-    
-    for (size_t i = 1; i < n; ++i) {
-        const VectorXf& p = points[i];
+    auto record= records.begin();
+    record++;
+
+    for (; record != records.end(); record++) {
+        Record_ *rec= *record;
+        VectorXf& p= rec->point;
         if ((p - center).norm() > radius) {
             float d = (p - center).norm();
             float newRadius = (d + radius) / 2.0f;
@@ -203,6 +202,7 @@ void welzl(const std::vector<VectorXf>& points, VectorXf& center, float& radius)
             radius = newRadius;
         }
     }
+    this->sphere= Sphere_(center, radius);
 }
 
 #endif // NODE_H

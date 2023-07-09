@@ -136,13 +136,13 @@ float proyFactor(VectorXf &eigenvect, VectorXf &point){
 */
 template<int ndim>
 void sortByProyFactor(vector<Record<ndim>*> &records){
+    
     // Obtener el eigenvector de mayor valor propio
-    //VectorXf eigenvect = getMaxEigenvectPCA<ndim>(records);
-    VectorXf eigenvect = getMaxEigenvectApprox<ndim>(records, 20);
+    VectorXf eigenvect = getMaxEigenvectApprox<ndim>(records, 500);
 
     //Calcular el factor de proyección de cada punto sobre el eigenvector
     for (auto record : records){
-        record->proyFactor = proyFactor(eigenvect, record->point);
+        record->proyFactor= proyFactor(eigenvect, record->point);
     }
 
     // Ordena records por el factor de proyección sobre eigenvect
