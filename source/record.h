@@ -22,9 +22,15 @@ struct Record{
 
     using Record_ = Record<ndim>;
 
-    Record() : point(ndim), id(-1), name("") {}
-    Record(int id, VectorXf point, string name) : point(point), id(id), name(name) {}
-    Record(const Record_ &other) : point(other.point), id(other.id), name(other.name) {}
+    Record(int id, VectorXf point, string name) : 
+        point(point), 
+        id(id), 
+        name(name) {}
+        
+    Record(const Record_ &other) : 
+        point(other.point), 
+        id(other.id), 
+        name(other.name) {}
 
     Record_& operator=(const Record_ &other){
         point = other.point;
@@ -50,7 +56,7 @@ struct Record{
         return (point - other).norm();
     }
     friend ostream &operator<<(ostream &os, Record_ &record){
-        os << record.id << record.name << "\t" << record.point.transpose();
+        os << record.id << '\t' << record.name << "\t" << record.point.transpose();
         return os;
     }
 };

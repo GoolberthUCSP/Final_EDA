@@ -33,10 +33,11 @@ struct Node{
 
     Node(size_t maxRecords, VecR_ &records);
     void build();
-    Record_ &search(VectorXf &point);
-    bool insert(Record_ &record);
     VecR_ rangeQuery(VectorXf &center, float radius);
-    void knnQuery(VectorXf &center, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_);
+    void knnQuery(VectorXf &center, 
+                    int k, 
+                    float &radius_, 
+                    multiset<neighbor<ndim>> &neighbors_);
     void calcSphere();
     void welzl();
 
@@ -168,7 +169,7 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
         }
     }
     else{
-        //Si la distancia es negativa, el nodo está dentro de la esfera de búsqueda    
+        //Si la distancia es menor que el radio, el nodo intersecta   
         if (left->sphere.distance(center_) <= radius_)
             left->knnQuery(center_, k, radius_, neighbors_);
 
@@ -177,13 +178,11 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
     }
 }
 
-//Welzl's algorithm
 /*
     @brief Calcula la esfera mínima que contiene a todos los puntos de un nodo en complejidad O(n)
 */
 template<int ndim>
 void Node<ndim>::welzl() {
-    //const std::vector<VectorXf>& points, VectorXf& center, float& radius
     size_t n = records.size();
     VectorXf center= records[0]->point;
     float radius = 0.0f;

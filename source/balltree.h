@@ -39,13 +39,10 @@ public:
     VecS_ rangeQuery(int id, float radius);
     VecS_ knnQuery(int id, int k);
     VecS_ knnQuery(string name, int k);
+    VecS_ linearKnnQuery(int id, int k);
     void normalize(VectorXf &point);
     VectorXf getPoint(string name);
     VectorXf getPoint(int id);
-
-    vector<string> linearKnnQuery(int id, int k);
-    
-    void printDict();
 
     long getIndexingTime(){return indexingTime;}
     long getKnnTime(){return knnTime;}
@@ -286,17 +283,6 @@ vector<string> BallTree<ndim>::knnQuery(string name, int k){
     }
     return result;
 }
-
-/*
-    @brief Imprime el diccionario de atributos numéricos
-*/
-template<int ndim>
-void BallTree<ndim>::printDict(){
-    for (auto it= coordNames.begin(); it!= coordNames.end(); it++){
-        cout << it->first << ": " << it->second << endl;
-    }
-}
-
 
 /*
     @brief Retorna los k vecinos más cercanos de id usando fuerza bruta

@@ -89,7 +89,7 @@ VectorXf getMaxEigenvectSVD(const std::vector<Record<ndim>*>& records){
 }
 
 /*
-    * @brief Método de la potencia para calcular el eigenvector aproximado de mayor valor propio de una matriz
+    * @brief Método de la potencia para calcular el eigenvector aproximado de mayor valor propio de una matriz. Algoritmo iterativo para encontrar el eigenvector dominante.
     * @param records: vector de records
     * @return: eigenvector aproximado de mayor valor propio
 */
@@ -136,7 +136,7 @@ float proyFactor(VectorXf &eigenvect, VectorXf &point){
 */
 template<int ndim>
 void sortByProyFactor(vector<Record<ndim>*> &records){
-    
+
     // Obtener el eigenvector de mayor valor propio
     VectorXf eigenvect = getMaxEigenvectApprox<ndim>(records, 500);
 
