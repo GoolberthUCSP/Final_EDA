@@ -182,12 +182,23 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
         }
     }
     else{
-        //Si la distancia es menor que el radio, el nodo intersecta   
-        if (left->sphere.distance(center_) <= radius_)
-            left->knnQuery(center_, k, radius_, neighbors_);
-
-        if (right->sphere.distance(center_) <= radius_)
-            right->knnQuery(center_, k, radius_, neighbors_);
+        //Si la distancia es menor que el radio, el nodo intersecta
+        //Ordenar los nodos hijos respecto a la distancia al centro de la esfera de búsqueda
+        Node_ *first, *second;
+        if (left->sphere.distance(center_) < right->sphere.distance(center_)){
+            first = left;
+            second = right;
+        }
+        else{
+            first = right;
+            second = left;
+        }
+        //Llamar a knnQuery para el nodo más cercano
+        if (first->sphere.distance(center_) <= radius_)
+            first->knnQuery(center_, k, radius_, neighbors_);
+        //Llamar a knnQuery para el nodo más lejano
+        if (second->sphere.distance(center_) <= radius_)
+            second->knnQuery(center_, k, radius_, neighbors_);
     }
 }
 
