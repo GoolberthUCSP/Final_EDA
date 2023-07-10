@@ -207,7 +207,6 @@ void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<nei
 */
 template<int ndim>
 void Node<ndim>::welzl() {
-    size_t n = records.size();
     VectorXf center= records[0]->point;
     float radius = 0.0f;
     
