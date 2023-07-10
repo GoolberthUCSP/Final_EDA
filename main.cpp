@@ -9,7 +9,7 @@ int main()
 {
   //OJO: Solo los primeros 18100 registros tienen nombre
   int k = 200;
-  int id= 4318;
+  int id = 4318;
   string name = "Cyberpurple"; 
 
   BallTree<DIM> balltree(600, "songs_final.csv");

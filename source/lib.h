@@ -18,17 +18,17 @@ using namespace Eigen;
 template<int ndim>
 MatrixXf createMatrix(const std::vector<Record<ndim>*>& records) {
     // Tamaño de la matriz
-    int numRecords = records.size();
-    int numDimensions = records[0]->getDimension();
+    int row = records.size();
+    int col = ndim;
 
     // Crear la matriz con espacio reservado
-    MatrixXf matrix(numRecords, numDimensions);
+    MatrixXf matrix(row, col);
 
     // Definir el número de hilos
     int numThreads = std::thread::hardware_concurrency();
 
     // Dividir el trabajo entre los hilos
-    int divSize = numRecords / numThreads;
+    int divSize = row / numThreads;
     int start, end;
 
     // Función que asigna los puntos a la matriz en paralelo
@@ -45,7 +45,7 @@ MatrixXf createMatrix(const std::vector<Record<ndim>*>& records) {
         end = start + divSize;
         threads.emplace_back(assignPointsToMatrix, start, end);
     }
-    threads.emplace_back(assignPointsToMatrix, end, numRecords);
+    threads.emplace_back(assignPointsToMatrix, end, row);
 
     // Esperar a que todos los hilos terminen
     for (auto& thread : threads) {

@@ -38,7 +38,6 @@ struct Record{
         name = other.name;
         return *this;
     }
-    int getDimension() const { return ndim; }
     /*
         @brief Calcula la distancia entre el record y otro record
         @param other: record al que se le calculará la distancia
@@ -56,7 +55,7 @@ struct Record{
         return (point - other).norm();
     }
     friend ostream &operator<<(ostream &os, Record_ &record){
-        os << record.id << '\t' << record.name << "\t" << record.point.transpose();
+        os << record.id << '\t' << record.name;
         return os;
     }
 };
