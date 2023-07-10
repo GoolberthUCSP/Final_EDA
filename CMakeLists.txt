@@ -21,7 +21,7 @@ add_executable(main main.cpp)
 
 target_link_libraries(main PRIVATE Eigen3::Eigen)
 
-target_compile_options(main PRIVATE -O2)
+target_compile_options(main PRIVATE -O3)
 
 # Definir una regla de make personalizada para borrar el caché generado por CMake
 add_custom_target(clean-all
