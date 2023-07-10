@@ -12,7 +12,7 @@
 #include<iostream>
 #include "node.h"
 
-const string FILENAME = "song_final.csv";
+const string FILENAME = "songs_final.csv";
 const float MAX_FLOAT = std::numeric_limits<float>::max();
 
 //Constantes de normalización para duration_ms y tempo
@@ -64,13 +64,12 @@ private:
 //BALLTREE METHODS
 template<int ndim>
 BallTree<ndim>::BallTree(int maxRecords, string filename){
-    //Inicializar el arbol con maxRecords y cargar los records desde filename
     this->maxRecords = maxRecords;
-    normalizer= VectorXf::Ones(ndim);
-    // normalizer[8] = MAX_TEMPO;
-    // normalizer[9] = MAX_DURATION;
+
+    //Cargar los records desde filename
     load(filename);
     
+    //Inicializar el indexado
     auto start = chrono::steady_clock::now();
     indexing();
     auto end = chrono::steady_clock::now();
@@ -132,7 +131,7 @@ void BallTree<ndim>::indexing(){
     //Construir el root
     root = new Node_(maxRecords, records);
     //Calcular la esfera para el root
-    root->calcSphere();
+    root->welzl();
     //Construir el resto del árbol recursivamente
     root->build();
 }
@@ -175,7 +174,7 @@ vector<string> BallTree<ndim>::rangeQuery(int id, float radius){
     auto end = chrono::steady_clock::now();
     rangeTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 
-    vector<string> names;
+    VecS_ names;
     for (Record_ *record: result){
         names.push_back(record->name);
     }
@@ -194,7 +193,6 @@ VectorXf BallTree<ndim>::getPoint(string name){
             return record->point;
         }
     }
-    cout << "Canción no encontrada" << endl;
     return VectorXf::Zero(ndim);
 }
 
@@ -232,18 +230,18 @@ void BallTree<ndim>::insert(Record_ &record){
 */
 template<int ndim>
 vector<string> BallTree<ndim>::knnQuery(int id, int k){
+    //Si k es mayor a la cantidad de records, se busca la cantidad máxima de vecinos
     if (k >= records.size()){
         k = records.size()-1;
     }
-    //Obtener el punto de la canción con id
+
+    //Obtener el punto de la canción con id = record->id
     VectorXf center = getPoint(id);
     multiset<neighbor<ndim>> neighbors;
     float radius = MAXFLOAT;
 
     auto start = chrono::steady_clock::now();
-    
     root->knnQuery(center, k+1, radius, neighbors);
-
     auto end = chrono::steady_clock::now();
     knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 
@@ -264,10 +262,12 @@ vector<string> BallTree<ndim>::knnQuery(int id, int k){
 */
 template<int ndim>
 vector<string> BallTree<ndim>::knnQuery(string name, int k){
+    //Si k es mayor a la cantidad de records, se busca la cantidad máxima de vecinos
     if (k >= records.size()){
         k = records.size()-1;
     }
-    //Obtener el punto de la canción con id
+
+    //Obtener el punto de la canción con id = record->id
     VectorXf center = getPoint(name);
     multiset<neighbor<ndim>> neighbors;
     float radius = MAXFLOAT;
@@ -276,11 +276,11 @@ vector<string> BallTree<ndim>::knnQuery(string name, int k){
     root->knnQuery(center, k+1, radius, neighbors);
     auto end = chrono::steady_clock::now();
     knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
-    
+
     vector<string> result;
     auto neighbor= neighbors.begin();
     neighbor++;
-    for(; neighbor!= neighbors.end(); neighbor++){
+    for(; neighbor!=neighbors.end(); neighbor++){
         result.push_back(neighbor->record->name);
     }
     return result;
@@ -294,10 +294,12 @@ vector<string> BallTree<ndim>::knnQuery(string name, int k){
 */
 template<int ndim>
 vector<string> BallTree<ndim>::linearKnnQuery(int id, int k){
+    //Si k es mayor a la cantidad de records, se busca la cantidad máxima de vecinos
     if (k >= records.size()){
         k = records.size()-1;
     }
 
+    //Obtener el punto de la canción con id = record->id
     VectorXf center= getPoint(id);
     multiset<neighbor<ndim>> neighbors;
 
@@ -312,7 +314,6 @@ vector<string> BallTree<ndim>::linearKnnQuery(int id, int k){
     linearKnnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 
     vector<string> result;
-    //Se obvia el primer elemento porque es el mismo
     auto neighbor= neighbors.begin();
     neighbor++;
     for(; neighbor!= neighbors.end(); neighbor++){

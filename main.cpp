@@ -7,7 +7,7 @@ using namespace std;
 
 int main()
 {
-  int k = 2000;
+  int k = 200000;
   int id= 2;
   string name = "Pathology"; //OJO: Solo los primeros 18100 registros tienen nombre
 

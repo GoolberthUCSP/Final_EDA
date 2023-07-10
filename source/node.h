@@ -53,14 +53,18 @@ template<int ndim>
 Node<ndim>::Node(size_t maxRecords, VecR_ &records){
     this->maxRecords = maxRecords;
     this->records = records;
-    if (records.size() > maxRecords) this->isLeaf = false;
-    else this->isLeaf = true;
+    if (records.size() > maxRecords) 
+        this->isLeaf = false;
+    else 
+        this->isLeaf = true;
 }
-
+/*
+    @brief Función que calcula la hiperesfera que contiene a todos los records
+*/
 template<int ndim>
 void Node<ndim>::calcSphere(){
-    //Calcular la hiperesfera que contiene a todos los records
-    //Center= centroide, radius= maxima distancia al centroide
+    //center= centroide
+    //radius= maxima distancia al centroide
     VectorXf centroid= VectorXf::Zero(ndim);
     float radius;
     for (Record_ *record: records){
@@ -79,13 +83,14 @@ void Node<ndim>::calcSphere(){
 */
 template<int ndim>
 void Node<ndim>::build(){
-    //Construir el árbol de forma recursiva
-    if (isLeaf) return;
+    //Si es hoja, detener la recursión
+    if (isLeaf) 
+        return;
 
-    //El vector de records ya está ordenado por el factor de proyección
     int end     = records.size();
     int median  = end/2;
     
+    //Dividir los records ordenados en dos grupos
     VecR_ leftRecords(records.begin(), records.begin()+median);
     VecR_ rightRecords(records.begin()+median, records.begin()+end);
 
@@ -123,6 +128,12 @@ void Node<ndim>::build(){
 template<int ndim>
 vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
     VecR_ result;
+
+    //Si la esfera del nodo no intersecta con la esfera de búsqueda, retornar un vector vacío
+    if (sphere.distance(center_) > radius_)
+        return result;
+        
+    //Si es hoja, buscar los records dentro de la esfera de búsqueda
     if (isLeaf){
         for (Record_ *record: records){
             if (record->distance(center_) <= radius_){
@@ -131,9 +142,7 @@ vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
         }
         return result;
     }
-    //Si la esfera del nodo no intersecta con la esfera de búsqueda, retornar un vector vacío
-    if (sphere.distance(center_) > radius_)
-        return result;
+    
     VecR_ leftResult = left->rangeQuery(center_, radius_);
     VecR_ rightResult = right->rangeQuery(center_, radius_);
     result.insert(result.end(), leftResult.begin(), leftResult.end());
@@ -151,9 +160,11 @@ vector<Record<ndim>*> Node<ndim>::rangeQuery(VectorXf &center_, float radius_){
 */
 template<int ndim>
 void Node<ndim>::knnQuery(VectorXf &center_, int k, float &radius_, multiset<neighbor<ndim>> &neighbors_){
+    //Si la esfera del nodo no intersecta con la esfera de búsqueda, detener la recursión
     if (sphere.distance(center_) > radius_)
         return;
 
+    //Si es hoja, buscar los k vecinos más cercanos
     if (isLeaf){
         float distance, maxOfList;
         for (Record_ *record: records){
