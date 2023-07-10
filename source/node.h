@@ -110,6 +110,8 @@ void Node<ndim>::build(){
     thread rightBuildThread(&Node_::build, right);
     leftBuildThread.join();
     rightBuildThread.join();
+
+    records.clear();
 }
 
 /*

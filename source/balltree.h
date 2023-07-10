@@ -113,7 +113,8 @@ void BallTree<ndim>::load(string filename){
             getline(ss, coord, ',');
             point[i] = stof(coord);
         }
-        getline(ss, name, ',');
+        getline(ss, name);
+        name = name.substr(0, name.size()-1);
         Record_ *record = new Record_(id, point, name);
         records.push_back(record);
         id++;
@@ -193,19 +194,8 @@ VectorXf BallTree<ndim>::getPoint(string name){
             return record->point;
         }
     }
+    cout << "Canción no encontrada" << endl;
     return VectorXf::Zero(ndim);
-}
-
-/*
-    @brief Inserta el record en la lista de records y reconstruye el árbol
-    @param record: registro a insertar
-*/
-template<int ndim>
-void BallTree<ndim>::insert(Record_ &record){
-    //Insertar el record en el root
-    records.push_back(&record);
-    //Reconstruir el árbol con el nuevo record añadido
-    indexing();
 }
 
 /*
@@ -221,6 +211,17 @@ VectorXf BallTree<ndim>::getPoint(int id){
         }
     }
     return VectorXf::Zero(ndim);
+}
+/*
+    @brief Inserta el record en la lista de records y reconstruye el árbol
+    @param record: registro a insertar
+*/
+template<int ndim>
+void BallTree<ndim>::insert(Record_ &record){
+    //Insertar el record en el root
+    records.push_back(&record);
+    //Reconstruir el árbol con el nuevo record añadido
+    indexing();
 }
 
 /*
@@ -242,6 +243,7 @@ vector<string> BallTree<ndim>::knnQuery(int id, int k){
     auto start = chrono::steady_clock::now();
     
     root->knnQuery(center, k+1, radius, neighbors);
+
     auto end = chrono::steady_clock::now();
     knnTime = chrono::duration_cast<chrono::nanoseconds>(end - start).count();
 
