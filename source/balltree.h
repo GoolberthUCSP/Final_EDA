@@ -168,7 +168,10 @@ template<int ndim>
 vector<string> BallTree<ndim>::rangeQuery(int id, float radius){
     VectorXf center = getPoint(id);
     VecR_ result;
-
+    if (center == VectorXf::Zero(ndim)){
+        cout << "Canción no encontrada" << endl;
+        return {};
+    }
     auto start = chrono::steady_clock::now();
     result= root->rangeQuery(center, radius);
     auto end = chrono::steady_clock::now();
@@ -237,6 +240,10 @@ vector<string> BallTree<ndim>::knnQuery(int id, int k){
 
     //Obtener el punto de la canción con id = record->id
     VectorXf center = getPoint(id);
+    if (center == VectorXf::Zero(ndim)){
+        cout << "Canción no encontrada" << endl;
+        return {};
+    }
     multiset<neighbor<ndim>> neighbors;
     float radius = MAXFLOAT;
 
@@ -269,6 +276,10 @@ vector<string> BallTree<ndim>::knnQuery(string name, int k){
 
     //Obtener el punto de la canción con id = record->id
     VectorXf center = getPoint(name);
+    if (center == VectorXf::Zero(ndim)){
+        cout << "Canción no encontrada" << endl;
+        return {};
+    }
     multiset<neighbor<ndim>> neighbors;
     float radius = MAXFLOAT;
 
@@ -301,6 +312,10 @@ vector<string> BallTree<ndim>::linearKnnQuery(int id, int k){
 
     //Obtener el punto de la canción con id = record->id
     VectorXf center= getPoint(id);
+    if (center == VectorXf::Zero(ndim)){
+        cout << "Canción no encontrada" << endl;
+        return {};
+    }
     multiset<neighbor<ndim>> neighbors;
 
     auto start = chrono::steady_clock::now();
